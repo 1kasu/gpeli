@@ -44,7 +44,7 @@ impl Paasilmukka for Perussilmukka {
         
         let mut nelio = Rect::new(20, 20, 20, 20);
         let mut x = 20.0;
-        let mut y = 20.0;
+        let mut y = -20.0;
         
         'paa: loop {
             for event in self.events.poll_iter() {
