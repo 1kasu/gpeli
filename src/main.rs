@@ -2,9 +2,9 @@ extern crate sdl2;
 
 use sdl2::pixels::Color;
 
-mod silmukka;
+pub mod silmukka;
 use crate::silmukka::Paasilmukka;
-use crate::silmukka::Perussilmukka;
+use crate::silmukka::perussilmukka::Perussilmukka;
 
 fn main() -> Result<(), String> {
     let sdl_context = sdl2::init()?;
