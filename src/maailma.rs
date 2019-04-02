@@ -11,6 +11,9 @@ impl Maailma {
     }
     
     /// Lisää annetun kappaleen maailmaan
+    /// # Arguments
+    /// 
+    /// * `kappale - Lisättävä kappale
     pub fn lisaa_kappale(&mut self, kappale: Kappale){
         self.kappaleet.push(kappale);
     }
@@ -26,6 +29,10 @@ pub struct Sijainti<T> {
 
 impl Sijainti<f32> {
     /// Siirtää sijaintia annetun verran
+    /// # Arguments
+    /// 
+    /// * `x - x-koordinaatin muutos
+    /// * 'y - y-koordinaatin muutos
     pub fn liiku(&mut self, x: f32, y: f32){
         self.x += x;
         self.y += y;
@@ -50,6 +57,12 @@ pub struct Kappale{
 }
 
 impl Kappale {
+    /// Luo uuden kappaleen
+    /// # Arguments
+    /// 
+    /// * `muoto - Kappaleen muoto
+    /// * `x - Kappaleen sijainnin x-koordinaatti
+    /// * `y - Kappaleen sijainnin y-koordinaatti
     pub fn new(muoto: Muoto, x: f32, y: f32) -> Self{
         Kappale{muoto: muoto, sijainti: Sijainti{x,y}}
     }

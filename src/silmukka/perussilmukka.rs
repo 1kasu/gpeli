@@ -3,34 +3,45 @@ extern crate sdl2;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::keyboard::Scancode;
-use sdl2::rect::Rect;
-use sdl2::render::Canvas;
-use sdl2::pixels::Color;
 
 use super::Paasilmukka;
-use super::maailma::*;
+use super::super::maailma::*;
+use super::super::piirtaja::*;
 
 
-/// Perus silmukka, joka päivittää peliä ja piirtää sen niin nopeasti kuin pystytään hyödyntäen päivitysaikaa
+/// Perussilmukka, joka päivittää peliä ja piirtää sen niin nopeasti kuin pystytään hyödyntäen päivitysaikaa
 pub struct Perussilmukka {
-    canvas: Canvas<sdl2::video::Window>,
+    /// Tältä voidaan kysellä tapahtumia kuten näppäimen painalluksia
     events: sdl2::EventPump,
+    /// Sdl context, jota tarvitaan esim. ajastimien luomisessa
     context: sdl2::Sdl,
+    /// Osa, joka vastaa pelitilan esittämisestä käyttäjälle
+    piirtaja: Peruspiirtaja
+}
+
+impl Perussilmukka{
+    /// Luo uuden perussilmukan
+    /// # Arguments
+    /// * `events - Eventpump, jolta saadaan tapahtumat
+    /// * `context - SDL2 konteksti
+    /// * `piirtaja - Osa, joka huolehtii pelin piirtämisestä
+    pub fn new(
+        events: sdl2::EventPump,
+        context: sdl2::Sdl,
+        piirtaja: Peruspiirtaja
+    ) -> Self {
+        Perussilmukka {
+            events: events,
+            context: context,
+            piirtaja: piirtaja
+        }
+    }
 }
 
 impl Paasilmukka for Perussilmukka {
-    fn new(
-        canvas: Canvas<sdl2::video::Window>,
-        events: sdl2::EventPump,
-        context: sdl2::Sdl,
-    ) -> Self {
-        Perussilmukka {
-            canvas: canvas,
-            events: events,
-            context: context,
-        }
-    }
+    
 
+    /// Käynnistää pääsilmukan ja pyörittää sitä niin kauan kuin se vain pyörii
     fn kaynnista_silmukka(&mut self) -> Result<(), String> {
         let mut timer = self.context.timer()?;
         let mut peliaika = timer.ticks();
@@ -93,29 +104,10 @@ impl Paasilmukka for Perussilmukka {
             }
             maailma.kappaleet[0].sijainti.liiku(x,y);
             
-            piirra_maailma(&mut self.canvas, &maailma)?;
+            self.piirtaja.piirra_maailma(&maailma)?;
         }
 
         Ok(())
     }
 }
 
-fn piirra_maailma(canvas: &mut Canvas<sdl2::video::Window>, maailma: &Maailma) -> Result<(), String> {
-    
-    canvas.set_draw_color(Color::RGB(10, 100, 10));
-    canvas.clear();
-    
-    canvas.set_draw_color(Color::RGB(200, 100, 10));
-    
-    for kappale in &maailma.kappaleet{
-        match kappale.muoto {
-            Muoto::Nelio(leveys, korkeus) => {
-                canvas.fill_rect(Some(Rect::new(kappale.sijainti.x as i32, kappale.sijainti.y as i32, leveys, korkeus)))?;
-            },
-            Muoto::Ympyra(_) => ()
-        }    
-    }
-    canvas.present();
-    
-    Ok(())
-}
