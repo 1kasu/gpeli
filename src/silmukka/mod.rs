@@ -7,5 +7,3 @@ pub trait Paasilmukka {
     /// Käynnistää alustetun pääsilmukan
     fn kaynnista_silmukka(&mut self) -> Result<(), String>;
 }
-
-
