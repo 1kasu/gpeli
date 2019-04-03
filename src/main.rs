@@ -28,7 +28,9 @@ fn main() -> Result<(), String> {
     canvas.set_draw_color(Color::RGBA(0, 0, 0, 255));
 
     let events = sdl_context.event_pump()?;
-    let piirtaja = Peruspiirtaja::new(canvas);
+    let mut piirtaja = Peruspiirtaja::new(canvas)?;
+    piirtaja.aseta_kameran_seurauksen_etaisyys((0.3,0.3))?;
+    piirtaja.aseta_kameran_zoomi(0.5);
 
     let mut silmukka = Perussilmukka::new(events, sdl_context, piirtaja);
 
