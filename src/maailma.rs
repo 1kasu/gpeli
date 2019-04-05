@@ -1,3 +1,5 @@
+use std::ops::{Add, Sub};
+
 /// Sisältää tiedon pelimaailman tilasta eli kaikkien kappaleiden tiedot
 #[derive(Default)]
 pub struct Maailma {
@@ -48,6 +50,28 @@ impl Sijainti {
     /// * `y` - sijainnin y-koordinaatti
     pub fn new(x: f32, y: f32) -> Self {
         Sijainti { x, y }
+    }
+    
+    /// Kertoo sijainnin jollakin luvulla ja palauttaa uuden sijainnin
+    /// # Arguments
+    /// * `kerroin` - Luku, jolla sijainti kerrotaan
+    pub fn kerro(self, kerroin: f32) -> Sijainti{
+        Sijainti{x: self.x * kerroin, y: self.y * kerroin}
+    }
+}
+
+impl Add for Sijainti{
+    type Output = Sijainti;
+    fn add(self, other: Sijainti) -> Sijainti {
+        Sijainti {x: self.x + other.x, y: self.y + other.y}
+    }
+}
+
+impl Sub for Sijainti {
+    type Output = Sijainti;
+
+    fn sub(self, other: Sijainti) -> Sijainti {
+        Sijainti {x: self.x - other.x, y: self.y - other.y}
     }
 }
 

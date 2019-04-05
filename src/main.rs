@@ -29,10 +29,15 @@ fn main() -> Result<(), String> {
 
     let events = sdl_context.event_pump()?;
     let mut piirtaja = Peruspiirtaja::new(canvas)?;
-    piirtaja.aseta_kameran_seurauksen_etaisyys((0.3,0.3))?;
-    piirtaja.aseta_kameran_zoomi(0.5);
+    
+    let seuraus = (0.2,0.2);
+    let zoomi = 0.5;
+    println!("Seuraus on {0} ja {1}", seuraus.0, seuraus.1);
+    println!("Zoomi on {}", zoomi);
+    
+    piirtaja.aseta_kameran_seurauksen_etaisyys(seuraus)?;
+    piirtaja.aseta_kameran_zoomi(zoomi);
 
     let mut silmukka = Perussilmukka::new(events, sdl_context, piirtaja);
-
     silmukka.kaynnista_silmukka()
 }

@@ -3,6 +3,8 @@ extern crate sdl2;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::keyboard::Scancode;
+use std::time::SystemTime;
+use std::time::Duration;
 
 use super::super::maailma::*;
 use super::super::piirtaja::*;
@@ -37,18 +39,17 @@ impl Paasilmukka for Perussilmukka {
     /// Käynnistää pääsilmukan ja pyörittää sitä niin kauan kuin se vain pyörii
     fn kaynnista_silmukka(&mut self) -> Result<(), String> {
         let mut timer = self.context.timer()?;
-        let mut peliaika = timer.ticks();
+        let mut peliaika = SystemTime::now();
         let mut vanha_peliaika = peliaika;
-        let mut paivitysaika: f32;
+        let mut paivitysaika;
 
         let mut maailma = Maailma::new();
-
         maailma.lisaa_kappale(Kappale::new(Muoto::Nelio(20.0, 20.0), 320.0, 240.0));
         maailma.lisaa_kappale(Kappale::new(Muoto::Nelio(640.0, 20.0), 320.0, 470.0));
         maailma.lisaa_kappale(Kappale::new(Muoto::Nelio(640.0, 20.0), 320.0, 10.0));
         maailma.lisaa_kappale(Kappale::new(Muoto::Nelio(20.0, 480.0), 10.0, 240.0));
         maailma.lisaa_kappale(Kappale::new(Muoto::Nelio(20.0, 480.0), 630.0, 240.0));
-
+        
         'paa: loop {
             for event in self.events.poll_iter() {
                 match event {
@@ -61,16 +62,19 @@ impl Paasilmukka for Perussilmukka {
                     }
                     _ => {}
                 }
+                
             }
+            timer.delay(30);
             // Lasketaan paivitysaika
-            peliaika = timer.ticks();
-            paivitysaika = (peliaika - vanha_peliaika) as f32;
+            peliaika = SystemTime::now();
+            paivitysaika = peliaika.duration_since(vanha_peliaika).unwrap();
+            //println!("{:?}", paivitysaika.as_nanos());
             vanha_peliaika = peliaika;
-
             let mut x = 0.0;
             let mut y = 0.0;
 
-            let liike = paivitysaika * 0.2;
+            //if paivitysaika.as_micros() > 20000 {println!("{:?}", paivitysaika.as_micros());}
+            let liike = paivitysaika.as_micros() as f32 * 0.0002;
             if self
                 .events
                 .keyboard_state()
@@ -101,7 +105,8 @@ impl Paasilmukka for Perussilmukka {
             }
             maailma.kappaleet[0].sijainti.liiku(x, y);
 
-            self.piirtaja.aseta_kameran_sijainti(maailma.kappaleet[0].sijainti);
+            
+            self.piirtaja.aseta_kameran_sijainti(maailma.kappaleet[0].sijainti)?;
             self.piirtaja.piirra_maailma(&maailma)?;
         }
 

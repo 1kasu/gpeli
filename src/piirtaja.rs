@@ -18,7 +18,7 @@ pub trait Piirtaja {
     /// Asettaa kameran sijainnin
     /// # Arguments
     /// * `kameran_sijainti` - Piirtavan kameran sijainti
-    fn aseta_kameran_sijainti(&mut self, kameran_sijainti: Sijainti);
+    fn aseta_kameran_sijainti(&mut self, kameran_sijainti: Sijainti) -> Result<(), String>;
     /// Asettaa kameran zoomin
     /// # Arguments
     /// * `kameran_zoomi` - Kuinka paljon kamera zoomaa kuvaa. Suhteellinen luku, jolloin 1.0 on ei-zoomia. Suurempi luku zoomaa.
@@ -43,7 +43,7 @@ struct Kamera {
     sijainti: Sijainti,
     /// Kerroin, jolla zoomataan piirrettäviä kohteita.
     zoomin_kerroin: f32,
-    /// Absoluuttinen etäisyys (pikseleinä?) kuinka paljon kamera voi jäädä jälkeen seurattavasta kohteesta.
+    /// Suhteellinen etäisyys kuinka paljon kamera voi jäädä jälkeen seurattavasta kohteesta.
     etaisyys_seurattavasta: (f32, f32),
 }
 
@@ -73,16 +73,15 @@ impl Peruspiirtaja {
     }
 
     /// Laskee kameran aiheuttaman sijainnin muutoksen ja palauttaa sen
-    fn kameran_aiheuttama_muutos(&self) -> Result<((f32, f32)), String> {
+    fn kameran_aiheuttama_muutos(&self) -> Result<(Sijainti), String> {
         let keskipiste = self.keskipiste()?;
-        let muutos = (
-            keskipiste.x - self.kamera.sijainti.x,
-            keskipiste.y - self.kamera.sijainti.y,
-        );
+        let muutos = keskipiste - self.kamera.sijainti;
         Ok(muutos)
     }
 
     /// Antaa piirtoalueen keskipisteen
+    /// # Arguments
+    /// * `canvas` - Piirtoalue, jonka keskipiste lasketaan
     fn canvaksen_keskipiste(canvas: &Canvas<sdl2::video::Window>) -> Result<Sijainti, String> {
         let koko = canvas.output_size()?;
         Ok(Sijainti::new(koko.0 as f32 / 2.0, koko.1 as f32 / 2.0))
@@ -111,8 +110,8 @@ impl Piirtaja for Peruspiirtaja {
             match kappale.muoto {
                 Muoto::Nelio(leveys, korkeus) => {
                     self.canvas.fill_rect(Some(Rect::new(
-                        (kappale.sijainti.x * self.kamera.zoomin_kerroin + muutos.0 * self.kamera.zoomin_kerroin) as i32,
-                        (kappale.sijainti.y * self.kamera.zoomin_kerroin + muutos.1 * self.kamera.zoomin_kerroin) as i32,
+                        (kappale.sijainti.x * self.kamera.zoomin_kerroin + muutos.x) as i32,
+                        (kappale.sijainti.y * self.kamera.zoomin_kerroin + muutos.y) as i32,
                         (leveys * self.kamera.zoomin_kerroin) as u32,
                         (korkeus * self.kamera.zoomin_kerroin) as u32,
                     )))?;
@@ -128,25 +127,28 @@ impl Piirtaja for Peruspiirtaja {
     /// Asettaa kameran sijainnin eli missä kohtaa pelimaailmaa kuvan keskipisteen tulisi olla.
     /// # Arguments
     /// * `sijainti` - Kameran sijainti
-    fn aseta_kameran_sijainti(&mut self, sijainti: Sijainti) {
-        self.kamera.sijainti.x = match self.kamera.sijainti.x - sijainti.x {
-            x if x < -self.kamera.etaisyys_seurattavasta.0 => {
-                sijainti.x - self.kamera.etaisyys_seurattavasta.0
+    fn aseta_kameran_sijainti(&mut self, sijainti: Sijainti) -> Result<(), String> {
+        let zoomattu_sijainti = sijainti.kerro(self.kamera.zoomin_kerroin);
+
+        self.kamera.sijainti.x = match self.kamera.sijainti.x - zoomattu_sijainti.x {
+            x if x < -self.kamera.etaisyys_seurattavasta.0 * self.keskipiste()?.x => {
+                zoomattu_sijainti.x - self.kamera.etaisyys_seurattavasta.0 * self.keskipiste()?.x
             }
-            x if x > self.kamera.etaisyys_seurattavasta.0 => {
-                sijainti.x + self.kamera.etaisyys_seurattavasta.0
+            x if x > self.kamera.etaisyys_seurattavasta.0 * self.keskipiste()?.x => {
+                zoomattu_sijainti.x + self.kamera.etaisyys_seurattavasta.0 * self.keskipiste()?.x
             }
             _ => self.kamera.sijainti.x,
         };
-        self.kamera.sijainti.y = match self.kamera.sijainti.y - sijainti.y {
-            y if y < -self.kamera.etaisyys_seurattavasta.1 => {
-                sijainti.y - self.kamera.etaisyys_seurattavasta.1
+        self.kamera.sijainti.y = match self.kamera.sijainti.y - zoomattu_sijainti.y {
+            y if y < -self.kamera.etaisyys_seurattavasta.1 * self.keskipiste()?.y => {
+                zoomattu_sijainti.y - self.kamera.etaisyys_seurattavasta.1 * self.keskipiste()?.y
             }
-            y if y > self.kamera.etaisyys_seurattavasta.1 => {
-                sijainti.y + self.kamera.etaisyys_seurattavasta.1
+            y if y > self.kamera.etaisyys_seurattavasta.1 * self.keskipiste()?.y => {
+                zoomattu_sijainti.y + self.kamera.etaisyys_seurattavasta.1 * self.keskipiste()?.y
             }
             _ => self.kamera.sijainti.y,
         };
+        Ok(())
     }
 
     /// Asettaa kameran zoomin. Jos zoomi pienempi kuin 0.1, niin pakotetaan arvoksi 0.1.
@@ -163,24 +165,17 @@ impl Piirtaja for Peruspiirtaja {
     /// # Arguments
     /// * `etaisyys` - Kuinka paljon kamera voi jäädä jälkeen seurattavasta. Suhteellinen arvo väliltä 0-1. Sisältää x ja y koordinaatin erikseen.
     fn aseta_kameran_seurauksen_etaisyys(&mut self, etaisyys: (f32, f32)) -> Result<(), String> {
-        let keskipiste = self.keskipiste()?;
-        let mut rajoitettu_etaisyys = etaisyys;
         // Rajoitetaan suhteellinen etäisyys välille 0-1
-        if rajoitettu_etaisyys.0 <= 0.0 {
-            rajoitettu_etaisyys.0 = 0.0;
-        } else if rajoitettu_etaisyys.0 > 1.0 {
-            rajoitettu_etaisyys.0 = 1.0
-        }
-        if rajoitettu_etaisyys.1 <= 0.0 {
-            rajoitettu_etaisyys.1 = 0.0;
-        } else if rajoitettu_etaisyys.1 > 1.0 {
-            rajoitettu_etaisyys.1 = 1.0
-        }
-
-        self.kamera.etaisyys_seurattavasta = (
-            (keskipiste.x * rajoitettu_etaisyys.0),
-            (keskipiste.y * rajoitettu_etaisyys.1),
-        );
+        self.kamera.etaisyys_seurattavasta.0 = match etaisyys.0 {
+            x if x <= 0.0 => 0.0,
+            x if x >= 1.0 => 1.0,
+            x => x,
+        };
+        self.kamera.etaisyys_seurattavasta.1 = match etaisyys.1 {
+            y if y <= 0.0 => 0.0,
+            y if y >= 1.0 => 1.0,
+            y => y,
+        };
         Ok(())
     }
 }
