@@ -14,7 +14,7 @@ fn main() -> Result<(), String> {
     let video_subsystem = sdl_context.video()?;
 
     let window = video_subsystem
-        .window("Peli", 640, 480)
+        .window("Peli", 1280, 720)
         .position_centered()
         .build()
         .map_err(|e| e.to_string())?;
@@ -22,6 +22,7 @@ fn main() -> Result<(), String> {
     let mut canvas = window
         .into_canvas()
         .accelerated()
+        .present_vsync()
         .build()
         .map_err(|e| e.to_string())?;
 
@@ -31,7 +32,7 @@ fn main() -> Result<(), String> {
     let mut piirtaja = Peruspiirtaja::new(canvas)?;
     
     let seuraus = (0.2,0.2);
-    let zoomi = 0.5;
+    let zoomi = 1.0;
     println!("Seuraus on {0} ja {1}", seuraus.0, seuraus.1);
     println!("Zoomi on {}", zoomi);
     
