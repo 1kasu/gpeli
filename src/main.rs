@@ -5,6 +5,7 @@ use sdl2::pixels::Color;
 pub mod maailma;
 pub mod piirtaja;
 pub mod silmukka;
+pub mod syotteet;
 use crate::piirtaja::*;
 use crate::silmukka::perussilmukka::Perussilmukka;
 use crate::silmukka::Paasilmukka;

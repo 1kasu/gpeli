@@ -7,6 +7,7 @@ use std::time::Instant;
 
 use super::super::maailma::*;
 use super::super::piirtaja::*;
+use super::super::syotteet::*;
 use super::Paasilmukka;
 //use std::fs::File;
 //use std::io::LineWriter;
@@ -37,6 +38,11 @@ impl Perussilmukka {
     }
 }
 
+const OIKEALLE_LIIKKUMINEN: Scancode = Scancode::Right;
+const VASEMMALLE_LIIKKUMINEN: Scancode = Scancode::Left;
+const ALAS_LIIKKUMINEN: Scancode = Scancode::Down;
+const YLOS_LIIKKUMINEN: Scancode = Scancode::Up;
+
 impl Paasilmukka for Perussilmukka {
     /// Käynnistää pääsilmukan ja pyörittää sitä niin kauan kuin se vain pyörii
     fn kaynnista_silmukka(&mut self) -> Result<(), String> {
@@ -58,6 +64,12 @@ impl Paasilmukka for Perussilmukka {
         maailma.lisaa_kappale(Kappale::new(Muoto::Nelio(20.0, 480.0), 10.0, 240.0));
         maailma.lisaa_kappale(Kappale::new(Muoto::Nelio(20.0, 480.0), 630.0, 240.0));
 
+        let mut syotteet = Syotteet::new();
+        syotteet.lisaa_nappain(&self.events, OIKEALLE_LIIKKUMINEN);
+        syotteet.lisaa_nappain(&self.events, VASEMMALLE_LIIKKUMINEN);
+        syotteet.lisaa_nappain(&self.events, YLOS_LIIKKUMINEN);
+        syotteet.lisaa_nappain(&self.events, ALAS_LIIKKUMINEN);
+
         'paa: loop {
             for event in self.events.poll_iter() {
                 match event {
@@ -75,9 +87,9 @@ impl Paasilmukka for Perussilmukka {
             // Lasketaan paivitysaika
             peliaika = Instant::now();
             paivitysaika = vanha_peliaika.elapsed();
-            if paivitysaika.as_nanos() > 5_000_000 {
+            /*if paivitysaika.as_nanos() > 5_000_000 {
                 println!("{:?}", paivitysaika.as_nanos());
-            }
+            }*/
             /*match write!(file, "{:?}\n", paivitysaika.as_nanos()) {
                 Ok(_) => (),
                 Err(_) => return Err("Tiedostoon ei voitu kirjoittaa".to_string()),
@@ -88,32 +100,31 @@ impl Paasilmukka for Perussilmukka {
             let mut y = 0.0;
 
             //if paivitysaika.as_micros() > 20000 {println!("{:?}", paivitysaika.as_micros());}
+
+            syotteet.paivita_nappainten_tilat(&self.events);
+
             let liike = paivitysaika.as_micros() as f32 * 0.0002;
-            if self
-                .events
-                .keyboard_state()
-                .is_scancode_pressed(Scancode::Right)
+            if syotteet
+                .anna_nappaimen_tila(OIKEALLE_LIIKKUMINEN)
+                .map_or(false, |x| x.pohjassa())
             {
                 x += liike;
             }
-            if self
-                .events
-                .keyboard_state()
-                .is_scancode_pressed(Scancode::Left)
+            if syotteet
+                .anna_nappaimen_tila(VASEMMALLE_LIIKKUMINEN)
+                .map_or(false, |x| x.pohjassa())
             {
                 x -= liike;
             }
-            if self
-                .events
-                .keyboard_state()
-                .is_scancode_pressed(Scancode::Up)
+            if syotteet
+                .anna_nappaimen_tila(YLOS_LIIKKUMINEN)
+                .map_or(false, |x| x.pohjassa())
             {
                 y -= liike;
             }
-            if self
-                .events
-                .keyboard_state()
-                .is_scancode_pressed(Scancode::Down)
+            if syotteet
+                .anna_nappaimen_tila(ALAS_LIIKKUMINEN)
+                .map_or(false, |x| x.pohjassa())
             {
                 y += liike;
             }
