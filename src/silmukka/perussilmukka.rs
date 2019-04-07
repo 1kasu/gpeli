@@ -14,7 +14,7 @@ use super::Paasilmukka;
 //use std::io::Write;
 
 /// Perussilmukka, joka päivittää peliä ja piirtää sen niin nopeasti kuin pystytään hyödyntäen päivitysaikaa
-pub struct Perussilmukka {
+pub struct Perussilmukka<'a> {
     /// Tältä voidaan kysellä tapahtumia kuten näppäimen painalluksia
     events: sdl2::EventPump,
     /// Sdl context, jota tarvitaan esim. ajastimien luomisessa
@@ -24,10 +24,10 @@ pub struct Perussilmukka {
     /// Pelin käyttämät syötteet
     syotteet: Syotteet,
     /// Pelin käyttämä päivitys
-    paivitys: Peruspaivitys,
+    paivitys: &'a Paivitys,
 }
 
-impl Perussilmukka {
+impl<'a> Perussilmukka<'a> {
     /// Luo uuden perussilmukan
     /// # Arguments
     /// * `events` - Eventpump, jolta saadaan tapahtumat
@@ -38,7 +38,7 @@ impl Perussilmukka {
         events: sdl2::EventPump,
         context: sdl2::Sdl,
         piirtaja: Peruspiirtaja,
-        paivitys: Peruspaivitys,
+        paivitys: &'a Paivitys,
     ) -> Self {
         Perussilmukka {
             events: events,
@@ -50,7 +50,7 @@ impl Perussilmukka {
     }
 }
 
-impl Paasilmukka for Perussilmukka {
+impl<'a> Paasilmukka for Perussilmukka<'a> {
     /// Käynnistää pääsilmukan ja pyörittää sitä niin kauan kuin se vain pyörii
     fn kaynnista_silmukka(&mut self) -> Result<(), String> {
         let mut _timer = self.context.timer()?;
@@ -101,7 +101,7 @@ impl Paasilmukka for Perussilmukka {
 
             self.paivitys
                 .paivita(&mut maailma, &mut self.syotteet, &paivitysaika);
-                
+
             self.piirtaja
                 .aseta_kameran_sijainti(maailma.kappaleet[0].sijainti)?;
             self.piirtaja.piirra_maailma(&maailma)?;

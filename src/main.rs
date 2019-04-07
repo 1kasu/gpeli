@@ -44,6 +44,6 @@ fn main() -> Result<(), String> {
     piirtaja.aseta_kameran_seurauksen_etaisyys(seuraus)?;
     piirtaja.aseta_kameran_zoomi(zoomi);
 
-    let mut silmukka = Perussilmukka::new(events, sdl_context, piirtaja, paivitys);
+    let mut silmukka = Perussilmukka::new(events, sdl_context, piirtaja, &paivitys);
     silmukka.kaynnista_silmukka()
 }
