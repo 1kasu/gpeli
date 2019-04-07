@@ -26,20 +26,20 @@ impl Maailma {
 
 /// Sijainti 2d maailmassa. Muodoilla vasemman yläkulman sijainti. Origo on vasemmassa yläkulmassa.
 #[derive(Copy, Clone)]
-pub struct Sijainti {
+pub struct Sijainti<T> {
     /// x-koordinaatti
-    pub x: f32,
+    pub x: T,
     /// y-koordinaatti
-    pub y: f32,
+    pub y: T,
 }
 
-impl Sijainti {
+impl<T: std::ops::AddAssign + std::ops::Mul> Sijainti<T> {
     /// Siirtää sijaintia annetun verran
     /// # Arguments
     ///
     /// * `x` - x-koordinaatin muutos
     /// * 'y` - y-koordinaatin muutos
-    pub fn liiku(&mut self, x: f32, y: f32) {
+    pub fn liiku(&mut self, x: T, y: T) {
         self.x += x;
         self.y += y;
     }
@@ -48,14 +48,16 @@ impl Sijainti {
     /// # Arguments
     /// * `x` - sijainnin x-koordinaatti
     /// * `y` - sijainnin y-koordinaatti
-    pub fn new(x: f32, y: f32) -> Self {
+    pub fn new(x: T, y: T) -> Self {
         Sijainti { x, y }
     }
+}
 
+impl Sijainti<f32> {
     /// Kertoo sijainnin jollakin luvulla ja palauttaa uuden sijainnin
     /// # Arguments
     /// * `kerroin` - Luku, jolla sijainti kerrotaan
-    pub fn kerro(self, kerroin: f32) -> Sijainti {
+    pub fn kerro(self, kerroin: f32) -> Sijainti<f32> {
         Sijainti {
             x: self.x * kerroin,
             y: self.y * kerroin,
@@ -63,9 +65,9 @@ impl Sijainti {
     }
 }
 
-impl Add for Sijainti {
-    type Output = Sijainti;
-    fn add(self, other: Sijainti) -> Sijainti {
+impl Add for Sijainti<f32> {
+    type Output = Sijainti<f32>;
+    fn add(self, other: Sijainti<f32>) -> Sijainti<f32> {
         Sijainti {
             x: self.x + other.x,
             y: self.y + other.y,
@@ -73,10 +75,10 @@ impl Add for Sijainti {
     }
 }
 
-impl Sub for Sijainti {
-    type Output = Sijainti;
+impl Sub for Sijainti<f32> {
+    type Output = Sijainti<f32>;
 
-    fn sub(self, other: Sijainti) -> Sijainti {
+    fn sub(self, other: Sijainti<f32>) -> Sijainti<f32> {
         Sijainti {
             x: self.x - other.x,
             y: self.y - other.y,
@@ -97,7 +99,7 @@ pub struct Kappale {
     /// Kappaleen muoto
     pub muoto: Muoto,
     /// Kappaleen sijainti
-    pub sijainti: Sijainti,
+    pub sijainti: Sijainti<f32>,
 }
 
 impl Kappale {

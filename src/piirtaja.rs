@@ -7,7 +7,8 @@ use sdl2::render::Canvas;
 
 use crate::maailma::Maailma;
 use crate::maailma::Muoto;
-use crate::maailma::Sijainti;
+
+type Sijainti = crate::maailma::Sijainti<f32>;
 
 /// Huolehtii pelimaailman esittämisestä käyttäjälle.
 pub trait Piirtaja {
