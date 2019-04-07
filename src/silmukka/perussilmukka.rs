@@ -20,7 +20,7 @@ pub struct Perussilmukka<'a> {
     /// Sdl context, jota tarvitaan esim. ajastimien luomisessa
     context: sdl2::Sdl,
     /// Osa, joka vastaa pelitilan esittämisestä käyttäjälle
-    piirtaja: Peruspiirtaja,
+    piirtaja: &'a mut Piirtaja,
     /// Pelin käyttämät syötteet
     syotteet: Syotteet,
     /// Pelin käyttämä päivitys
@@ -37,7 +37,7 @@ impl<'a> Perussilmukka<'a> {
     pub fn new(
         events: sdl2::EventPump,
         context: sdl2::Sdl,
-        piirtaja: Peruspiirtaja,
+        piirtaja: &'a mut Piirtaja,
         paivitys: &'a Paivitys,
     ) -> Self {
         Perussilmukka {

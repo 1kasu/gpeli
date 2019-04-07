@@ -3,15 +3,14 @@ extern crate sdl2;
 use sdl2::pixels::Color;
 
 pub mod maailma;
+pub mod paivitys;
 pub mod piirtaja;
 pub mod silmukka;
 pub mod syotteet;
-pub mod paivitys;
+use crate::paivitys::*;
 use crate::piirtaja::*;
 use crate::silmukka::perussilmukka::Perussilmukka;
 use crate::silmukka::Paasilmukka;
-use crate::paivitys::*;
-
 
 fn main() -> Result<(), String> {
     let sdl_context = sdl2::init()?;
@@ -35,15 +34,15 @@ fn main() -> Result<(), String> {
     let events = sdl_context.event_pump()?;
     let mut piirtaja = Peruspiirtaja::new(canvas)?;
     let paivitys = Peruspaivitys;
-    
-    let seuraus = (0.2,0.2);
+
+    let seuraus = (0.2, 0.2);
     let zoomi = 1.0;
     println!("Seuraus on {0} ja {1}", seuraus.0, seuraus.1);
     println!("Zoomi on {}", zoomi);
-    
+
     piirtaja.aseta_kameran_seurauksen_etaisyys(seuraus)?;
     piirtaja.aseta_kameran_zoomi(zoomi);
 
-    let mut silmukka = Perussilmukka::new(events, sdl_context, piirtaja, &paivitys);
+    let mut silmukka = Perussilmukka::new(events, sdl_context, &mut piirtaja, &paivitys);
     silmukka.kaynnista_silmukka()
 }
