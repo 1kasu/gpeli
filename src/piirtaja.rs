@@ -130,7 +130,7 @@ impl Piirtaja for Peruspiirtaja {
     /// # Arguments
     /// * `sijainti` - Kameran sijainti
     fn aseta_kameran_sijainti(&mut self, sijainti: Sijainti) -> Result<(), String> {
-        let zoomattu_sijainti = sijainti.kerro(self.kamera.zoomin_kerroin);
+        let zoomattu_sijainti = sijainti * self.kamera.zoomin_kerroin;
 
         self.kamera.sijainti.x = match self.kamera.sijainti.x - zoomattu_sijainti.x {
             x if x < -self.kamera.etaisyys_seurattavasta.0 * self.keskipiste()?.x => {

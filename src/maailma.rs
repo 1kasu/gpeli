@@ -1,4 +1,4 @@
-use std::ops::{Add, Sub};
+use std::ops::{Add, Mul, Sub};
 
 /// Sisältää tiedon pelimaailman tilasta eli kaikkien kappaleiden tiedot
 #[derive(Default)]
@@ -54,18 +54,20 @@ impl<T: std::ops::AddAssign> Sijainti<T> {
     }
 }
 
-impl<T: std::ops::Mul<Output = T> + Copy> Sijainti<T> {
-    /// Kertoo sijainnin jollakin luvulla ja palauttaa uuden sijainnin
-    /// # Arguments
-    /// * `kerroin` - Luku, jolla sijainti kerrotaan
-    pub fn kerro(self, kerroin: T) -> Sijainti<T> {
-        let x: T = self.x * kerroin;
-        let y: T = self.y * kerroin;
-        Sijainti { x: x, y: y }
+impl<T> Mul<T> for Sijainti<T>
+where
+    T: Mul<Output = T> + Copy,
+{
+    type Output = Sijainti<T>;
+    fn mul(self, other: T) -> Self::Output {
+        Sijainti {
+            x: self.x * other,
+            y: self.y * other,
+        }
     }
 }
 
-impl<T: std::ops::Add<Output = T>> Add for Sijainti<T> {
+impl<T: Add<Output = T>> Add for Sijainti<T> {
     type Output = Sijainti<T>;
     fn add(self, other: Self::Output) -> Self::Output {
         Sijainti {
