@@ -26,24 +26,14 @@ impl Maailma {
 
 /// Sijainti 2d maailmassa. Muodoilla vasemman yläkulman sijainti. Origo on vasemmassa yläkulmassa.
 #[derive(Copy, Clone)]
-pub struct Sijainti<T> {
+pub struct Sijainti<T = f32> {
     /// x-koordinaatti
     pub x: T,
     /// y-koordinaatti
     pub y: T,
 }
 
-impl<T: std::ops::AddAssign + std::ops::Mul> Sijainti<T> {
-    /// Siirtää sijaintia annetun verran
-    /// # Arguments
-    ///
-    /// * `x` - x-koordinaatin muutos
-    /// * 'y` - y-koordinaatin muutos
-    pub fn liiku(&mut self, x: T, y: T) {
-        self.x += x;
-        self.y += y;
-    }
-
+impl<T> Sijainti<T> {
     /// Luo uuden sijainnin
     /// # Arguments
     /// * `x` - sijainnin x-koordinaatti
@@ -53,21 +43,31 @@ impl<T: std::ops::AddAssign + std::ops::Mul> Sijainti<T> {
     }
 }
 
-impl Sijainti<f32> {
-    /// Kertoo sijainnin jollakin luvulla ja palauttaa uuden sijainnin
+impl<T: std::ops::AddAssign> Sijainti<T> {
+    /// Siirtää sijaintia annetun verran
     /// # Arguments
-    /// * `kerroin` - Luku, jolla sijainti kerrotaan
-    pub fn kerro(self, kerroin: f32) -> Sijainti<f32> {
-        Sijainti {
-            x: self.x * kerroin,
-            y: self.y * kerroin,
-        }
+    /// * `x` - x-koordinaatin muutos
+    /// * 'y` - y-koordinaatin muutos
+    pub fn liiku(&mut self, x: T, y: T) {
+        self.x += x;
+        self.y += y;
     }
 }
 
-impl Add for Sijainti<f32> {
-    type Output = Sijainti<f32>;
-    fn add(self, other: Sijainti<f32>) -> Sijainti<f32> {
+impl<T: std::ops::Mul<Output = T> + Copy> Sijainti<T> {
+    /// Kertoo sijainnin jollakin luvulla ja palauttaa uuden sijainnin
+    /// # Arguments
+    /// * `kerroin` - Luku, jolla sijainti kerrotaan
+    pub fn kerro(self, kerroin: T) -> Sijainti<T> {
+        let x: T = self.x * kerroin;
+        let y: T = self.y * kerroin;
+        Sijainti { x: x, y: y }
+    }
+}
+
+impl<T: std::ops::Add<Output = T>> Add for Sijainti<T> {
+    type Output = Sijainti<T>;
+    fn add(self, other: Self::Output) -> Self::Output {
         Sijainti {
             x: self.x + other.x,
             y: self.y + other.y,
@@ -75,10 +75,10 @@ impl Add for Sijainti<f32> {
     }
 }
 
-impl Sub for Sijainti<f32> {
-    type Output = Sijainti<f32>;
+impl<T: std::ops::Sub<Output = T>> Sub for Sijainti<T> {
+    type Output = Sijainti<T>;
 
-    fn sub(self, other: Sijainti<f32>) -> Sijainti<f32> {
+    fn sub(self, other: Self::Output) -> Self::Output {
         Sijainti {
             x: self.x - other.x,
             y: self.y - other.y,
