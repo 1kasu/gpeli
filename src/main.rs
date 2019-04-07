@@ -6,9 +6,12 @@ pub mod maailma;
 pub mod piirtaja;
 pub mod silmukka;
 pub mod syotteet;
+pub mod paivitys;
 use crate::piirtaja::*;
 use crate::silmukka::perussilmukka::Perussilmukka;
 use crate::silmukka::Paasilmukka;
+use crate::paivitys::*;
+
 
 fn main() -> Result<(), String> {
     let sdl_context = sdl2::init()?;
@@ -31,6 +34,7 @@ fn main() -> Result<(), String> {
 
     let events = sdl_context.event_pump()?;
     let mut piirtaja = Peruspiirtaja::new(canvas)?;
+    let paivitys = Peruspaivitys;
     
     let seuraus = (0.2,0.2);
     let zoomi = 1.0;
@@ -40,6 +44,6 @@ fn main() -> Result<(), String> {
     piirtaja.aseta_kameran_seurauksen_etaisyys(seuraus)?;
     piirtaja.aseta_kameran_zoomi(zoomi);
 
-    let mut silmukka = Perussilmukka::new(events, sdl_context, piirtaja);
+    let mut silmukka = Perussilmukka::new(events, sdl_context, piirtaja, paivitys);
     silmukka.kaynnista_silmukka()
 }
