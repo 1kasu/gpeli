@@ -36,7 +36,7 @@ impl Paivitys for Peruspaivitys {
     /// * `syotteet` - Alustettavat syotteet
     /// * `events` - Sdl:n osa, jolta voidaan kysyä tapahtumia kuten näppäinten painalluksia
     fn alusta(&self, maailma: &mut Maailma, syotteet: &mut Syotteet, events: &sdl2::EventPump) {
-        maailma.lisaa_kappale(Kappale::new(Muoto::Nelio(20.0, 20.0), 320.0, 240.0));
+        maailma.lisaa_pelihahmo(Kappale::new(Muoto::Nelio(20.0, 20.0), 320.0, 240.0));
         maailma.lisaa_kappale(Kappale::new(Muoto::Nelio(640.0, 20.0), 320.0, 470.0));
         maailma.lisaa_kappale(Kappale::new(Muoto::Nelio(640.0, 20.0), 320.0, 10.0));
         maailma.lisaa_kappale(Kappale::new(Muoto::Nelio(20.0, 480.0), 10.0, 240.0));
@@ -81,6 +81,8 @@ impl Paivitys for Peruspaivitys {
         {
             y += liike;
         }
-        maailma.kappaleet[0].sijainti.liiku(x, y);
+        if let Some(hahmo) = maailma.anna_pelihahmo() {
+            hahmo.sijainti.liiku(x, y)
+        }
     }
 }

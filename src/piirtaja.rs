@@ -5,11 +5,10 @@ use sdl2::pixels::Color;
 use sdl2::rect::Rect;
 use sdl2::render::Canvas;
 
+use crate::maailma::Kappale;
 use crate::maailma::Maailma;
 use crate::maailma::Muoto;
 use crate::maailma::Sijainti;
-
-//type Sijainti = crate::maailma::Sijainti<f32>;
 
 /// Huolehtii pelimaailman esittämisestä käyttäjälle.
 pub trait Piirtaja {
@@ -29,6 +28,50 @@ pub trait Piirtaja {
     /// # Arguments
     /// * `etaisyys` - Kuinka paljon kamera voi jäädä jälkeen seurattavasta. Suhteellinen arvo väliltä 0-1. Sisältää x ja y koordinaatin erikseen.
     fn aseta_kameran_seurauksen_etaisyys(&mut self, etaisyys: (f32, f32)) -> Result<(), String>;
+}
+
+/// Kohde, joka on piirrettävissä canvakselle
+pub trait Piirrettava {
+    /// Piirtää kohteen canvakselle käyttämällä tarvittavia kameran muunnoksia
+    /// # Arguments
+    /// * `canvas` - Canvas, jolle piirretään
+    /// * `kameran_aiheuttama_muunnos` - Kameran sijainnista johtuva muunnos
+    /// * `kameran_zoomaus` - Kameran zoomauksesta johtuva muunnos
+    fn piirra(
+        &self,
+        canvas: &mut Canvas<sdl2::video::Window>,
+        kameran_aiheuttama_muutos: Sijainti,
+        kameran_zoomaus: f32,
+    ) -> Result<(), String>;
+}
+
+
+impl Piirrettava for Kappale {
+    /// Piirtää kappaleen canvakselle käyttämällä tarvittavia kameran muunnoksia
+    /// # Arguments
+    /// * `canvas` - Canvas, jolle piirretään
+    /// * `kameran_aiheuttama_muunnos` - Kameran sijainnista johtuva muunnos
+    /// * `kameran_zoomaus` - Kameran zoomauksesta johtuva muunnos
+    fn piirra(
+        &self,
+        canvas: &mut Canvas<sdl2::video::Window>,
+        kameran_aiheuttama_muutos: Sijainti,
+        kameran_zoomaus: f32,
+    ) -> Result<(), String> {
+        match self.muoto {
+            Muoto::Nelio(leveys, korkeus) => {
+                canvas.fill_rect(Some(Rect::new(
+                    (self.sijainti.x * kameran_zoomaus + kameran_aiheuttama_muutos.x) as i32,
+                    (self.sijainti.y * kameran_zoomaus + kameran_aiheuttama_muutos.y) as i32,
+                    (leveys * kameran_zoomaus) as u32,
+                    (korkeus * kameran_zoomaus) as u32,
+                )))?;
+            }
+            Muoto::Ympyra(_) => (),
+        }
+
+        Ok(())
+    }
 }
 
 /// Peruspiirtäjä, joka piirtää pelin tilan näytölle
@@ -108,21 +151,11 @@ impl Piirtaja for Peruspiirtaja {
 
         self.canvas.set_draw_color(Color::RGB(200, 100, 10));
 
-        for kappale in &maailma.kappaleet {
-            match kappale.muoto {
-                Muoto::Nelio(leveys, korkeus) => {
-                    self.canvas.fill_rect(Some(Rect::new(
-                        (kappale.sijainti.x * self.kamera.zoomin_kerroin + muutos.x) as i32,
-                        (kappale.sijainti.y * self.kamera.zoomin_kerroin + muutos.y) as i32,
-                        (leveys * self.kamera.zoomin_kerroin) as u32,
-                        (korkeus * self.kamera.zoomin_kerroin) as u32,
-                    )))?;
-                }
-                Muoto::Ympyra(_) => (),
-            }
+        for piirrettava in maailma.piirrettavat(muutos) {
+            piirrettava.piirra(&mut self.canvas, muutos, self.kamera.zoomin_kerroin)?;
         }
         self.canvas.present();
-
+        
         Ok(())
     }
 

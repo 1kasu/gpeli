@@ -4,7 +4,9 @@ use std::ops::{Add, Mul, Sub};
 #[derive(Default)]
 pub struct Maailma {
     /// Pelimaailman sisältämät kappaleet
-    pub kappaleet: Vec<Kappale>,
+    kappaleet: Vec<Kappale>,
+    /// Onko pelihahmo luotu jo
+    pelihahmo: bool,
 }
 
 impl Maailma {
@@ -12,6 +14,7 @@ impl Maailma {
     pub fn new() -> Self {
         Maailma {
             kappaleet: Vec::new(),
+            pelihahmo: false,
         }
     }
 
@@ -21,6 +24,28 @@ impl Maailma {
     /// * `kappale` - Lisättävä kappale
     pub fn lisaa_kappale(&mut self, kappale: Kappale) {
         self.kappaleet.push(kappale);
+    }
+
+    /// Lisää annetun pelihahmon maailmaan
+    pub fn lisaa_pelihahmo(&mut self, pelihahmo: Kappale) {
+        if !self.pelihahmo {
+            self.kappaleet.insert(0, pelihahmo);
+            self.pelihahmo = true;
+        }
+    }
+
+    /// Antaa pelihahmon, jos sellainen on luotu
+    pub fn anna_pelihahmo(&mut self) -> Option<&mut Kappale> {
+        if self.pelihahmo {
+            Some(&mut self.kappaleet[0])
+        } else {
+            None
+        }
+    }
+
+    /// Antaa piirrettävät kappaleet
+    pub fn piirrettavat(&self, _sijainti: Sijainti) -> &[Kappale] {
+        &self.kappaleet
     }
 }
 
@@ -54,6 +79,11 @@ impl<T: std::ops::AddAssign> Sijainti<T> {
     }
 }
 
+// Muhahahaa!!!
+// Vaviskaa maan matoset!
+// Muutaman tunnin jälkeen vihdoin sain kirjoitettua tämän oikein!
+// Nyt voin käyttää *-operaattoria sijainnille millä tahansa kertolaskua
+// tukevalla tyypillä.
 impl<T> Mul<T> for Sijainti<T>
 where
     T: Mul<Output = T> + Copy,
@@ -77,7 +107,7 @@ impl<T: Add<Output = T>> Add for Sijainti<T> {
     }
 }
 
-impl<T: std::ops::Sub<Output = T>> Sub for Sijainti<T> {
+impl<T: Sub<Output = T>> Sub for Sijainti<T> {
     type Output = Sijainti<T>;
 
     fn sub(self, other: Self::Output) -> Self::Output {
@@ -107,7 +137,6 @@ pub struct Kappale {
 impl Kappale {
     /// Luo uuden kappaleen
     /// # Arguments
-    ///
     /// * `muoto` - Kappaleen muoto
     /// * `x` - Kappaleen keskipisteen sijainnin x-koordinaatti
     /// * `y` - Kappaleen keskipisteen sijainnin y-koordinaatti
@@ -120,11 +149,7 @@ impl Kappale {
             Muoto::Ympyra(r) => Kappale {
                 muoto: muoto,
                 sijainti: Sijainti::new(x - r, y - r),
-            }, /*
-               _ => Kappale {
-                   muoto: muoto,
-                   sijainti: Sijainti { x, y },
-               },*/
+            },
         }
     }
 }

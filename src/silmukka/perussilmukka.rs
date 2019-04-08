@@ -102,8 +102,10 @@ impl<'a> Paasilmukka for Perussilmukka<'a> {
             self.paivitys
                 .paivita(&mut maailma, &mut self.syotteet, &paivitysaika);
 
-            self.piirtaja
-                .aseta_kameran_sijainti(maailma.kappaleet[0].sijainti)?;
+            if let Some(hahmo) = maailma.anna_pelihahmo() {
+                self.piirtaja.aseta_kameran_sijainti(hahmo.sijainti)?
+            }
+
             self.piirtaja.piirra_maailma(&maailma)?;
         }
 
