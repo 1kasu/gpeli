@@ -20,7 +20,6 @@ impl Maailma {
 
     /// Lisää annetun kappaleen maailmaan
     /// # Arguments
-    ///
     /// * `kappale` - Lisättävä kappale
     pub fn lisaa_kappale(&mut self, kappale: Kappale) {
         self.kappaleet.push(kappale);
@@ -35,12 +34,26 @@ impl Maailma {
     }
 
     /// Antaa pelihahmon, jos sellainen on luotu
-    pub fn anna_pelihahmo(&mut self) -> Option<&mut Kappale> {
+    pub fn anna_pelihahmo_mut(&mut self) -> Option<&mut Kappale> {
         if self.pelihahmo {
             Some(&mut self.kappaleet[0])
         } else {
             None
         }
+    }
+    
+    /// Antaa pelihahmon, jos sellainen on luotu
+    pub fn anna_pelihahmo(&self) -> Option<&Kappale> {
+        if self.pelihahmo {
+            Some(&self.kappaleet[0])
+        } else {
+            None
+        }
+    }
+    
+    /// Onko maailmassa pelihahmo olemassa
+    pub fn onko_pelihahmo(&self) -> bool{
+        self.pelihahmo
     }
 
     /// Antaa piirrettävät kappaleet

@@ -42,6 +42,38 @@ impl Syotteet {
             .map(|x| x.tila)
     }
 
+    /// Onko annettu näppäin pohjassa
+    /// # Arguments
+    /// * `nappain_koodi` - näppäin, jonka tilaa kysytään
+    pub fn nappain_pohjassa(&self, nappain_koodi: Scancode) -> bool {
+        self.anna_nappaimen_tila(nappain_koodi)
+            .map_or(false, |x| x.pohjassa())
+    }
+
+    /// Onko annettu näppäin painettu juuri pohjaan
+    /// # Arguments
+    /// * `nappain_koodi` - näppäin, jonka tilaa kysytään
+    pub fn nappain_painettu(&self, nappain_koodi: Scancode) -> bool {
+        self.anna_nappaimen_tila(nappain_koodi)
+            .map_or(false, |x| x.painettu())
+    }
+
+    /// Onko annettu näppäin vapautettu juuri pohjasta
+    /// # Arguments
+    /// * `nappain_koodi` - näppäin, jonka tilaa kysytään
+    pub fn nappain_vapautettu(&self, nappain_koodi: Scancode) -> bool {
+        self.anna_nappaimen_tila(nappain_koodi)
+            .map_or(false, |x| x.vapautettu())
+    }
+
+    /// Onko annettu näppäin vapautettuna
+    /// # Arguments
+    /// * `nappain_koodi` - näppäin, jonka tilaa kysytään
+    pub fn nappain_ei_pohjassa(&self, nappain_koodi: Scancode) -> bool {
+        self.anna_nappaimen_tila(nappain_koodi)
+            .map_or(false, |x| x.ei_pohjassa())
+    }
+
     /// Päivittää kaikkien näppäinten tilan
     /// # Arguments
     /// * `events` - Tapahtumalista, josta tarkastetaan, onko näppäin luotaessa jo pohjassa
@@ -96,7 +128,7 @@ impl Nappain {
 }
 
 /// Kuvaa näppäimen tilaa eli onko se pohjassa vai ei.
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Eq, PartialEq)]
 pub enum Tila {
     /// Näppäin on pohjassa
     Pohjassa(Muutos),
@@ -105,16 +137,35 @@ pub enum Tila {
 }
 
 impl Tila {
+    /// Onko näppäin pohjassa
     pub fn pohjassa(self) -> bool {
         match self {
             Tila::Pohjassa(_) => true,
             Tila::EiPohjassa(_) => false,
         }
     }
+
+    /// Onko näppäin vapautettu
+    pub fn ei_pohjassa(self) -> bool {
+        match self {
+            Tila::Pohjassa(_) => false,
+            Tila::EiPohjassa(_) => true,
+        }
+    }
+
+    /// Onko näppäin juuri painettu pohjaan
+    pub fn painettu(self) -> bool {
+        Tila::Pohjassa(Muutos::Muuttunut) == self
+    }
+
+    /// Onko näppäin juuri vapautettu pohjasta
+    pub fn vapautettu(self) -> bool {
+        Tila::EiPohjassa(Muutos::Muuttunut) == self
+    }
 }
 
 /// Kuvaa onko näppäimen tila muuttunut viime syötteen tarkistukselta
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Eq, PartialEq)]
 pub enum Muutos {
     /// Näppäimen tila on muuttunut. Esim. juuri vapautettu pohjasta.
     Muuttunut,
