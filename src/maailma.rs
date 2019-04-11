@@ -1,10 +1,18 @@
+use std::cell::RefCell;
 use std::ops::{Add, Mul, Sub};
+use std::rc::Rc;
+
+use super::fysiikka::Fysiikkakappale;
+
+type RcKappale = Rc<RefCell<Kappale>>;
 
 /// Sisältää tiedon pelimaailman tilasta eli kaikkien kappaleiden tiedot
 #[derive(Default)]
 pub struct Maailma {
     /// Pelimaailman sisältämät kappaleet
-    kappaleet: Vec<Kappale>,
+    kappaleet: Vec<RcKappale>,
+    /// Maailmassa olevat fysiikkakappaleet
+    fysiikka_kappaleet: Vec<Fysiikkakappale>,
     /// Onko pelihahmo luotu jo
     pelihahmo: bool,
 }
@@ -14,51 +22,66 @@ impl Maailma {
     pub fn new() -> Self {
         Maailma {
             kappaleet: Vec::new(),
+            fysiikka_kappaleet: Vec::new(),
             pelihahmo: false,
         }
     }
 
-    /// Lisää annetun kappaleen maailmaan
+    /// Lisää annetun kappaleen maailmaan ja antaa viiteen siihen
     /// # Arguments
     /// * `kappale` - Lisättävä kappale
-    pub fn lisaa_kappale(&mut self, kappale: Kappale) {
-        self.kappaleet.push(kappale);
+    pub fn lisaa_kappale(&mut self, kappale: Kappale) -> RcKappale{
+        let r_kappale = Rc::new(RefCell::new(kappale));
+        self.kappaleet.push(Rc::clone(&r_kappale));
+        r_kappale
+    }
+
+    /// Lisää annetun fysiikkakappaleen maailmaan
+    /// # Arguments
+    /// * `kappale` - Lisättävä fysiikkakappale
+    pub fn lisaa_fysiikkakappale(&mut self, kappale: Fysiikkakappale) {
+        self.fysiikka_kappaleet.push(kappale);
     }
 
     /// Lisää annetun pelihahmon maailmaan
     pub fn lisaa_pelihahmo(&mut self, pelihahmo: Kappale) {
         if !self.pelihahmo {
-            self.kappaleet.insert(0, pelihahmo);
+            self.kappaleet.insert(0, Rc::new(RefCell::new(pelihahmo)));
             self.pelihahmo = true;
         }
     }
 
     /// Antaa pelihahmon, jos sellainen on luotu
-    pub fn anna_pelihahmo_mut(&mut self) -> Option<&mut Kappale> {
+    pub fn anna_pelihahmo_mut(&mut self) -> Option<&mut RcKappale> {
         if self.pelihahmo {
             Some(&mut self.kappaleet[0])
         } else {
             None
         }
     }
-    
+
     /// Antaa pelihahmon, jos sellainen on luotu
-    pub fn anna_pelihahmo(&self) -> Option<&Kappale> {
+    pub fn anna_pelihahmo(&self) -> Option<&RcKappale> {
         if self.pelihahmo {
             Some(&self.kappaleet[0])
         } else {
             None
         }
     }
-    
+
     /// Onko maailmassa pelihahmo olemassa
-    pub fn onko_pelihahmo(&self) -> bool{
+    pub fn onko_pelihahmo(&self) -> bool {
         self.pelihahmo
     }
 
     /// Antaa piirrettävät kappaleet
-    pub fn piirrettavat(&self, _sijainti: Sijainti) -> &[Kappale] {
+    pub fn piirrettavat(&self, _sijainti: Sijainti) -> &[RcKappale] {
         &self.kappaleet
+    }
+
+    /// Antaa fysiikkalliset kappaleet
+    pub fn fysiikalliset(&mut self) -> &mut [Fysiikkakappale] {
+        &mut self.fysiikka_kappaleet
     }
 }
 
@@ -132,6 +155,7 @@ impl<T: Sub<Output = T>> Sub for Sijainti<T> {
 }
 
 /// Ennalta määrätty muoto kuten neliä tai ympyrä
+#[derive(Copy, Clone)]
 pub enum Muoto {
     /// Tarkkaan ottaen suorakaide, jolla on leveys ja korkeus
     Nelio(f32, f32),

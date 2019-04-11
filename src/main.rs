@@ -7,6 +7,7 @@ pub mod paivitys;
 pub mod piirtaja;
 pub mod silmukka;
 pub mod syotteet;
+pub mod fysiikka;
 use crate::paivitys::*;
 use crate::piirtaja::*;
 use crate::silmukka::perussilmukka::Perussilmukka;
@@ -33,7 +34,7 @@ fn main() -> Result<(), String> {
 
     let events = sdl_context.event_pump()?;
     let mut piirtaja = Peruspiirtaja::new(canvas)?;
-    let paivitys = Peruspaivitys;
+    let paivitys = Peruspaivitys::new();
 
     let seuraus = (0.2, 0.2);
     let zoomi = 1.0;

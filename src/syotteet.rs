@@ -1,6 +1,7 @@
 use sdl2::keyboard::Scancode;
 use sdl2::EventPump;
 
+/// Sisältää joukon näppäimiä, joden tilaa komponentti tarkkailee käskettäessä
 #[derive(Default)]
 pub struct Syotteet {
     /// Lista tarkkailtavista näppäimistä

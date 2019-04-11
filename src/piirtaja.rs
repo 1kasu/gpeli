@@ -152,7 +152,7 @@ impl Piirtaja for Peruspiirtaja {
         self.canvas.set_draw_color(Color::RGB(200, 100, 10));
 
         for piirrettava in maailma.piirrettavat(muutos) {
-            piirrettava.piirra(&mut self.canvas, muutos, self.kamera.zoomin_kerroin)?;
+            piirrettava.borrow().piirra(&mut self.canvas, muutos, self.kamera.zoomin_kerroin)?;
         }
         self.canvas.present();
         
