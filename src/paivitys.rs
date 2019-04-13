@@ -79,16 +79,16 @@ impl Paivitys for PelihahmonPaivitys {
                 .sijainti
                 .liiku(x, y);
 
-            let hahmo = maailma.anna_pelihahmo().unwrap();
+            let hahmon_sijainti = maailma.anna_pelihahmo().unwrap().borrow().sijainti;
 
-            /*
             if syotteet.nappain_painettu(AMPUMINEN) {
-                maailma.lisaa_kappale(Kappale::new(
+                let kappale = maailma.lisaa_kappale(Kappale::new(
                     Muoto::Nelio(5.0, 5.0),
-                    hahmo.borrow_mut().sijainti.x + 22.5,
-                    hahmo.borrow_mut().sijainti.y + 10.0,
+                    hahmon_sijainti.x + 22.5,
+                    hahmon_sijainti.y + 10.0,
                 ));
-            }*/
+                maailma.lisaa_fysiikkakappale(Fysiikkakappale::new(Vektori::new(80.0, 0.0), kappale));
+            }
         }
     }
 }
@@ -120,7 +120,7 @@ impl Paivitys for Peruspaivitys {
         maailma.lisaa_kappale(Kappale::new(Muoto::Nelio(640.0, 20.0), 320.0, 10.0));
         maailma.lisaa_kappale(Kappale::new(Muoto::Nelio(20.0, 480.0), 10.0, 240.0));
         let rk = maailma.lisaa_kappale(Kappale::new(Muoto::Nelio(20.0, 480.0), 630.0, 240.0));
-        maailma.lisaa_fysiikkakappale(Fysiikkakappale::new(Sijainti::new(30.0, 0.0), rk));
+        maailma.lisaa_fysiikkakappale(Fysiikkakappale::new(Vektori::new(30.0, 0.0), rk));
 
         self.pelihahmon_paivitys.alusta(maailma, syotteet, events);
     }

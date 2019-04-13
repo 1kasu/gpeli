@@ -30,7 +30,7 @@ impl Maailma {
     /// Lisää annetun kappaleen maailmaan ja antaa viiteen siihen
     /// # Arguments
     /// * `kappale` - Lisättävä kappale
-    pub fn lisaa_kappale(&mut self, kappale: Kappale) -> RcKappale{
+    pub fn lisaa_kappale(&mut self, kappale: Kappale) -> RcKappale {
         let r_kappale = Rc::new(RefCell::new(kappale));
         self.kappaleet.push(Rc::clone(&r_kappale));
         r_kappale
@@ -75,7 +75,7 @@ impl Maailma {
     }
 
     /// Antaa piirrettävät kappaleet
-    pub fn piirrettavat(&self, _sijainti: Sijainti) -> &[RcKappale] {
+    pub fn piirrettavat(&self, _sijainti: Vektori) -> &[RcKappale] {
         &self.kappaleet
     }
 
@@ -87,24 +87,24 @@ impl Maailma {
 
 /// Sijainti 2d maailmassa. Muodoilla vasemman yläkulman sijainti. Origo on vasemmassa yläkulmassa.
 #[derive(Copy, Clone)]
-pub struct Sijainti<T = f32> {
+pub struct Vektori<T = f32> {
     /// x-koordinaatti
     pub x: T,
     /// y-koordinaatti
     pub y: T,
 }
 
-impl<T> Sijainti<T> {
+impl<T> Vektori<T> {
     /// Luo uuden sijainnin
     /// # Arguments
     /// * `x` - sijainnin x-koordinaatti
     /// * `y` - sijainnin y-koordinaatti
     pub fn new(x: T, y: T) -> Self {
-        Sijainti { x, y }
+        Vektori { x, y }
     }
 }
 
-impl<T: std::ops::AddAssign> Sijainti<T> {
+impl<T: std::ops::AddAssign> Vektori<T> {
     /// Siirtää sijaintia annetun verran
     /// # Arguments
     /// * `x` - x-koordinaatin muutos
@@ -120,34 +120,34 @@ impl<T: std::ops::AddAssign> Sijainti<T> {
 // Muutaman tunnin jälkeen vihdoin sain kirjoitettua tämän oikein!
 // Nyt voin käyttää *-operaattoria sijainnille millä tahansa kertolaskua
 // tukevalla tyypillä.
-impl<T> Mul<T> for Sijainti<T>
+impl<T> Mul<T> for Vektori<T>
 where
     T: Mul<Output = T> + Copy,
 {
-    type Output = Sijainti<T>;
+    type Output = Vektori<T>;
     fn mul(self, other: T) -> Self::Output {
-        Sijainti {
+        Vektori {
             x: self.x * other,
             y: self.y * other,
         }
     }
 }
 
-impl<T: Add<Output = T>> Add for Sijainti<T> {
-    type Output = Sijainti<T>;
+impl<T: Add<Output = T>> Add for Vektori<T> {
+    type Output = Vektori<T>;
     fn add(self, other: Self::Output) -> Self::Output {
-        Sijainti {
+        Vektori {
             x: self.x + other.x,
             y: self.y + other.y,
         }
     }
 }
 
-impl<T: Sub<Output = T>> Sub for Sijainti<T> {
-    type Output = Sijainti<T>;
+impl<T: Sub<Output = T>> Sub for Vektori<T> {
+    type Output = Vektori<T>;
 
     fn sub(self, other: Self::Output) -> Self::Output {
-        Sijainti {
+        Vektori {
             x: self.x - other.x,
             y: self.y - other.y,
         }
@@ -168,7 +168,7 @@ pub struct Kappale {
     /// Kappaleen muoto
     pub muoto: Muoto,
     /// Kappaleen sijainti
-    pub sijainti: Sijainti<f32>,
+    pub sijainti: Vektori<f32>,
 }
 
 impl Kappale {
@@ -181,11 +181,11 @@ impl Kappale {
         match muoto {
             Muoto::Nelio(xl, yl) => Kappale {
                 muoto: muoto,
-                sijainti: Sijainti::new(x - xl / 2.0, y - yl / 2.0),
+                sijainti: Vektori::new(x - xl / 2.0, y - yl / 2.0),
             },
             Muoto::Ympyra(r) => Kappale {
                 muoto: muoto,
-                sijainti: Sijainti::new(x - r, y - r),
+                sijainti: Vektori::new(x - r, y - r),
             },
         }
     }

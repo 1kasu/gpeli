@@ -8,7 +8,7 @@ use sdl2::render::Canvas;
 use crate::maailma::Kappale;
 use crate::maailma::Maailma;
 use crate::maailma::Muoto;
-use crate::maailma::Sijainti;
+use crate::maailma::Vektori;
 
 /// Huolehtii pelimaailman esittämisestä käyttäjälle.
 pub trait Piirtaja {
@@ -19,7 +19,7 @@ pub trait Piirtaja {
     /// Asettaa kameran sijainnin
     /// # Arguments
     /// * `kameran_sijainti` - Piirtavan kameran sijainti
-    fn aseta_kameran_sijainti(&mut self, kameran_sijainti: Sijainti) -> Result<(), String>;
+    fn aseta_kameran_sijainti(&mut self, kameran_sijainti: Vektori) -> Result<(), String>;
     /// Asettaa kameran zoomin
     /// # Arguments
     /// * `kameran_zoomi` - Kuinka paljon kamera zoomaa kuvaa. Suhteellinen luku, jolloin 1.0 on ei-zoomia. Suurempi luku zoomaa.
@@ -40,11 +40,10 @@ pub trait Piirrettava {
     fn piirra(
         &self,
         canvas: &mut Canvas<sdl2::video::Window>,
-        kameran_aiheuttama_muutos: Sijainti,
+        kameran_aiheuttama_muutos: Vektori,
         kameran_zoomaus: f32,
     ) -> Result<(), String>;
 }
-
 
 impl Piirrettava for Kappale {
     /// Piirtää kappaleen canvakselle käyttämällä tarvittavia kameran muunnoksia
@@ -55,7 +54,7 @@ impl Piirrettava for Kappale {
     fn piirra(
         &self,
         canvas: &mut Canvas<sdl2::video::Window>,
-        kameran_aiheuttama_muutos: Sijainti,
+        kameran_aiheuttama_muutos: Vektori,
         kameran_zoomaus: f32,
     ) -> Result<(), String> {
         match self.muoto {
@@ -85,7 +84,7 @@ pub struct Peruspiirtaja {
 /// Kamera, joka rajaa mikä alue esitetään pelimaailmasta.
 struct Kamera {
     /// Kameran sijainti pelimaailmassa
-    sijainti: Sijainti,
+    sijainti: Vektori,
     /// Kerroin, jolla zoomataan piirrettäviä kohteita.
     zoomin_kerroin: f32,
     /// Suhteellinen etäisyys kuinka paljon kamera voi jäädä jälkeen seurattavasta kohteesta.
@@ -97,7 +96,7 @@ impl Kamera {
     /// # Arguments
     /// * `sijainti` - Kameran sijainti pelimaailmassa
     /// * `zoomin_kerroin` - Kuinka paljon kamera zoomaa kuvaa. Suhteellinen luku, jolloin 1.0 on ei-zoomia. Suurempi luku zoomaa.
-    pub fn new(sijainti: Sijainti, zoomin_kerroin: f32) -> Self {
+    pub fn new(sijainti: Vektori, zoomin_kerroin: f32) -> Self {
         Kamera {
             sijainti: sijainti,
             zoomin_kerroin: zoomin_kerroin,
@@ -118,7 +117,7 @@ impl Peruspiirtaja {
     }
 
     /// Laskee kameran aiheuttaman sijainnin muutoksen ja palauttaa sen
-    fn kameran_aiheuttama_muutos(&self) -> Result<(Sijainti), String> {
+    fn kameran_aiheuttama_muutos(&self) -> Result<(Vektori), String> {
         let keskipiste = self.keskipiste()?;
         let muutos = keskipiste - self.kamera.sijainti;
         Ok(muutos)
@@ -127,13 +126,13 @@ impl Peruspiirtaja {
     /// Antaa piirtoalueen keskipisteen
     /// # Arguments
     /// * `canvas` - Piirtoalue, jonka keskipiste lasketaan
-    fn canvaksen_keskipiste(canvas: &Canvas<sdl2::video::Window>) -> Result<Sijainti, String> {
+    fn canvaksen_keskipiste(canvas: &Canvas<sdl2::video::Window>) -> Result<Vektori, String> {
         let koko = canvas.output_size()?;
-        Ok(Sijainti::new(koko.0 as f32 / 2.0, koko.1 as f32 / 2.0))
+        Ok(Vektori::new(koko.0 as f32 / 2.0, koko.1 as f32 / 2.0))
     }
 
     /// Antaa piirtoalueen keskipisteen
-    fn keskipiste(&self) -> Result<Sijainti, String> {
+    fn keskipiste(&self) -> Result<Vektori, String> {
         Peruspiirtaja::canvaksen_keskipiste(&self.canvas)
     }
 }
@@ -152,17 +151,19 @@ impl Piirtaja for Peruspiirtaja {
         self.canvas.set_draw_color(Color::RGB(200, 100, 10));
 
         for piirrettava in maailma.piirrettavat(muutos) {
-            piirrettava.borrow().piirra(&mut self.canvas, muutos, self.kamera.zoomin_kerroin)?;
+            piirrettava
+                .borrow()
+                .piirra(&mut self.canvas, muutos, self.kamera.zoomin_kerroin)?;
         }
         self.canvas.present();
-        
+
         Ok(())
     }
 
     /// Asettaa kameran sijainnin eli missä kohtaa pelimaailmaa kuvan keskipisteen tulisi olla.
     /// # Arguments
     /// * `sijainti` - Kameran sijainti
-    fn aseta_kameran_sijainti(&mut self, sijainti: Sijainti) -> Result<(), String> {
+    fn aseta_kameran_sijainti(&mut self, sijainti: Vektori) -> Result<(), String> {
         let zoomattu_sijainti = sijainti * self.kamera.zoomin_kerroin;
 
         self.kamera.sijainti.x = match self.kamera.sijainti.x - zoomattu_sijainti.x {
