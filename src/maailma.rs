@@ -2,7 +2,8 @@ use std::cell::RefCell;
 use std::ops::{Add, Mul, Sub};
 use std::rc::Rc;
 
-use super::fysiikka::Fysiikkakappale;
+use crate::fysiikka::Fysiikkakappale;
+use crate::piirtaja::PiirrettavaKappale;
 
 type RcKappale = Rc<RefCell<Kappale>>;
 
@@ -10,7 +11,7 @@ pub trait PiirrettavaMaailma {
     /// Piirrettävät kappaleet maailmassa
     /// # Arguments
     /// * `sijainti` - Ilmoittaa mistä päin maailmaa halutaan piirrettävät kappaleet
-    fn piirrettavat(&self, sijainti: Vektori) -> &[RcKappale];
+    fn piirrettavat(&self, sijainti: Vektori) -> &[PiirrettavaKappale];
 
     /// Antaa kameran sijainnin pelimaailmassa, jos maailma haluaa ehdottaa jotakin
     fn anna_kameran_sijainti(&self) -> Option<Vektori>;
@@ -23,7 +24,9 @@ pub struct Perusmaailma {
     kappaleet: Vec<RcKappale>,
     /// Maailmassa olevat fysiikkakappaleet
     fysiikka_kappaleet: Vec<Fysiikkakappale>,
-    /// Onko pelihahmo luotu jo
+    /// Piirrettävät kappaleet
+    piirrettavat_kappaleet: Vec<PiirrettavaKappale>,
+    /// Mahdollinen pelattava hahmo
     pelihahmo: Option<Pelihahmo>,
 }
 
@@ -43,6 +46,7 @@ impl Perusmaailma {
         Perusmaailma {
             kappaleet: Vec::new(),
             fysiikka_kappaleet: Vec::new(),
+            piirrettavat_kappaleet: Vec::new(),
             pelihahmo: None,
         }
     }
@@ -56,19 +60,24 @@ impl Perusmaailma {
         r_kappale
     }
 
-    /// Lisää annetun fysiikkakappaleen maailmaan
+    /// Lisää annetulle kappaleelle piirrettävyys ominaisuuden
+    /// # Arguments
+    /// * `kappale` - Lisättävä piirrettava kappale
+    pub fn lisaa_piirrettava_kappale(&mut self, kappale: PiirrettavaKappale) {
+        self.piirrettavat_kappaleet.push(kappale);
+    }
+
+    /// Lisää annettavalle kappaleelle fysiikan
     /// # Arguments
     /// * `kappale` - Lisättävä fysiikkakappale
     pub fn lisaa_fysiikkakappale(&mut self, kappale: Fysiikkakappale) {
         self.fysiikka_kappaleet.push(kappale);
     }
 
-    /// Lisää annetun pelihahmon maailmaan, jos maailmassa ei jo ole pelihahmoa
-    pub fn lisaa_pelihahmo(&mut self, pelihahmo: Kappale) {
+    /// Tekee annetusta kappaleesta pelihahmon
+    pub fn lisaa_pelihahmo(&mut self, pelihahmo: Pelihahmo) {
         if self.pelihahmo.is_none() {
-            let pelikappale = self.lisaa_kappale(pelihahmo);
-            self.pelihahmo = Some(Pelihahmo::new(pelikappale));
-            return;
+            self.pelihahmo = Some(pelihahmo);
         }
     }
 
@@ -103,8 +112,8 @@ impl PiirrettavaMaailma for Perusmaailma {
     /// Piirrettävät kappaleet maailmassa
     /// # Arguments
     /// * `sijainti` - Ilmoittaa mistä päin maailmaa halutaan piirrettävät kappaleet
-    fn piirrettavat(&self, _sijainti: Vektori) -> &[RcKappale] {
-        &self.kappaleet
+    fn piirrettavat(&self, _sijainti: Vektori) -> &[PiirrettavaKappale] {
+        &self.piirrettavat_kappaleet
     }
 
     /// Antaa kameran sijainnin pelimaailmassa, jos maailma haluaa ehdottaa jotakin

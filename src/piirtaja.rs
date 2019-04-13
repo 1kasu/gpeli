@@ -4,12 +4,14 @@
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
 use sdl2::render::Canvas;
+use std::cell::RefCell;
+use std::rc::Rc;
 
 use crate::maailma::Kappale;
 use crate::maailma::Muoto;
-use crate::maailma::Vektori;
 use crate::maailma::Perusmaailma;
 use crate::maailma::PiirrettavaMaailma;
+use crate::maailma::Vektori;
 
 /// Huolehtii pelimaailman esittämisestä käyttäjälle.
 pub trait Piirtaja {
@@ -29,6 +31,14 @@ pub trait Piirtaja {
     /// # Arguments
     /// * `etaisyys` - Kuinka paljon kamera voi jäädä jälkeen seurattavasta. Suhteellinen arvo väliltä 0-1. Sisältää x ja y koordinaatin erikseen.
     fn aseta_kameran_seurauksen_etaisyys(&mut self, etaisyys: (f32, f32)) -> Result<(), String>;
+}
+
+type RcKappale = Rc<RefCell<Kappale>>;
+
+/// Piirrettävä  kappale
+pub enum PiirrettavaKappale {
+    /// Yksivärinen kappale, jolla on väri ja kappale (jolla on muoto, koko, sijainti...)
+    YksivarinenKappale { kappale: RcKappale, vari: Color },
 }
 
 /// Kohde, joka on piirrettävissä canvakselle
@@ -71,6 +81,31 @@ impl Piirrettava for Kappale {
         }
 
         Ok(())
+    }
+}
+
+impl Piirrettava for PiirrettavaKappale {
+    /// Piirtää kappaleen canvakselle käyttämällä tarvittavia kameran muunnoksia
+    /// # Arguments
+    /// * `canvas` - Canvas, jolle piirretään
+    /// * `kameran_aiheuttama_muunnos` - Kameran sijainnista johtuva muunnos
+    /// * `kameran_zoomaus` - Kameran zoomauksesta johtuva muunnos
+    fn piirra(
+        &self,
+        canvas: &mut Canvas<sdl2::video::Window>,
+        kameran_aiheuttama_muutos: Vektori,
+        kameran_zoomaus: f32,
+    ) -> Result<(), String> {
+        match &self {
+            PiirrettavaKappale::YksivarinenKappale {
+                kappale: k,
+                vari: v,
+            } => {
+                canvas.set_draw_color(v.rgba());
+                k.borrow()
+                    .piirra(canvas, kameran_aiheuttama_muutos, kameran_zoomaus)
+            }
+        }
     }
 }
 
@@ -152,9 +187,7 @@ impl Piirtaja for Peruspiirtaja {
         self.canvas.set_draw_color(Color::RGB(200, 100, 10));
 
         for piirrettava in maailma.piirrettavat(muutos) {
-            piirrettava
-                .borrow()
-                .piirra(&mut self.canvas, muutos, self.kamera.zoomin_kerroin)?;
+            piirrettava.piirra(&mut self.canvas, muutos, self.kamera.zoomin_kerroin)?;
         }
         self.canvas.present();
 

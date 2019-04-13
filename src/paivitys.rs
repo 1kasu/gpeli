@@ -1,10 +1,14 @@
 use sdl2::keyboard::Scancode;
+use sdl2::pixels::Color;
+use std::cell::RefCell;
+use std::rc::Rc;
 use std::time::Duration;
 
-use super::fysiikka::Fysiikallinen;
-use super::fysiikka::Fysiikkakappale;
-use super::maailma::*;
-use super::syotteet::*;
+use crate::fysiikka::Fysiikallinen;
+use crate::fysiikka::Fysiikkakappale;
+use crate::maailma::*;
+use crate::piirtaja::PiirrettavaKappale;
+use crate::syotteet::*;
 
 /// Selkeyttää koodia, kun arvataan, että vektorilla tarkoitetaan luotavan kappaleen nopeutta ja suuntaa.
 type Nopeus = Vektori;
@@ -102,13 +106,17 @@ impl Paivitys for PelihahmonPaivitys {
             let hahmon_sijainti = maailma.anna_pelihahmo().unwrap().kappale.borrow().sijainti;
 
             if syotteet.nappain_painettu(AMPUMINEN) {
-                let kappale = maailma.lisaa_kappale(Kappale::new(
-                    Muoto::Nelio(5.0, 5.0),
-                    hahmon_sijainti.x + 22.5,
-                    hahmon_sijainti.y + 10.0,
-                ));
+                let r_kappale = lisaa_kappale(
+                    maailma,
+                    Kappale::new(
+                        Muoto::Nelio(5.0, 5.0),
+                        hahmon_sijainti.x + 22.5,
+                        hahmon_sijainti.y + 10.0,
+                    ),
+                    Color::RGB(0, 255, 255),
+                );
                 maailma
-                    .lisaa_fysiikkakappale(Fysiikkakappale::new(Nopeus::new(80.0, 0.0), kappale));
+                    .lisaa_fysiikkakappale(Fysiikkakappale::new(Nopeus::new(80.0, 0.0), r_kappale));
             }
         }
     }
@@ -129,6 +137,19 @@ impl Peruspaivitys {
     }
 }
 
+fn lisaa_kappale(
+    maailma: &mut Perusmaailma,
+    kappale: Kappale,
+    vari: Color,
+) -> Rc<RefCell<Kappale>> {
+    let r_kappale = maailma.lisaa_kappale(kappale);
+    maailma.lisaa_piirrettava_kappale(PiirrettavaKappale::YksivarinenKappale {
+        kappale: Rc::clone(&r_kappale),
+        vari: vari,
+    });
+    r_kappale
+}
+
 impl Paivitys for Peruspaivitys {
     /// Alustaa pelin
     /// # Arguments
@@ -141,12 +162,33 @@ impl Paivitys for Peruspaivitys {
         syotteet: &mut Syotteet,
         events: &sdl2::EventPump,
     ) {
-        maailma.lisaa_pelihahmo(Kappale::new(Muoto::Nelio(20.0, 20.0), 320.0, 240.0));
-        maailma.lisaa_kappale(Kappale::new(Muoto::Nelio(640.0, 20.0), 320.0, 470.0));
-        maailma.lisaa_kappale(Kappale::new(Muoto::Nelio(640.0, 20.0), 320.0, 10.0));
-        maailma.lisaa_kappale(Kappale::new(Muoto::Nelio(20.0, 480.0), 10.0, 240.0));
-        let rk = maailma.lisaa_kappale(Kappale::new(Muoto::Nelio(20.0, 480.0), 630.0, 240.0));
-        maailma.lisaa_fysiikkakappale(Fysiikkakappale::new(Nopeus::new(30.0, 0.0), rk));
+        let esteiden_vari = Color::RGB(20, 20, 200);
+        let _rk = lisaa_kappale(
+            maailma,
+            Kappale::new(Muoto::Nelio(20.0, 20.0), 320.0, 240.0),
+            Color::RGB(255, 30, 30),
+        );
+        maailma.lisaa_pelihahmo(Pelihahmo::new(Rc::clone(&_rk)));
+        let _rk = lisaa_kappale(
+            maailma,
+            Kappale::new(Muoto::Nelio(640.0, 20.0), 320.0, 470.0),
+            esteiden_vari,
+        );
+        let _rk = lisaa_kappale(
+            maailma,
+            Kappale::new(Muoto::Nelio(640.0, 20.0), 320.0, 10.0),
+            esteiden_vari,
+        );
+        let _rk = lisaa_kappale(
+            maailma,
+            Kappale::new(Muoto::Nelio(20.0, 480.0), 10.0, 240.0),
+            esteiden_vari,
+        );
+        let _rk = lisaa_kappale(
+            maailma,
+            Kappale::new(Muoto::Nelio(20.0, 480.0), 630.0, 240.0),
+            esteiden_vari,
+        );
 
         self.pelihahmon_paivitys.alusta(maailma, syotteet, events);
     }
