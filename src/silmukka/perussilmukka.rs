@@ -64,7 +64,7 @@ impl<'a> Paasilmukka for Perussilmukka<'a> {
         };
         let mut _file = LineWriter::new(file);*/
 
-        let mut maailma = Maailma::new();
+        let mut maailma = Perusmaailma::new();
         self.paivitys
             .alusta(&mut maailma, &mut self.syotteet, &self.events);
 

@@ -6,24 +6,44 @@ use super::fysiikka::Fysiikkakappale;
 
 type RcKappale = Rc<RefCell<Kappale>>;
 
+pub trait PiirrettavaMaailma {
+    /// Piirrettävät kappaleet maailmassa
+    /// # Arguments
+    /// * `sijainti` - Ilmoittaa mistä päin maailmaa halutaan piirrettävät kappaleet
+    fn piirrettavat(&self, sijainti: Vektori) -> &[RcKappale];
+
+    /// Antaa kameran sijainnin pelimaailmassa, jos maailma haluaa ehdottaa jotakin
+    fn anna_kameran_sijainti(&self) -> Option<Vektori>;
+}
+
 /// Sisältää tiedon pelimaailman tilasta eli kaikkien kappaleiden tiedot
 #[derive(Default)]
-pub struct Maailma {
+pub struct Perusmaailma {
     /// Pelimaailman sisältämät kappaleet
     kappaleet: Vec<RcKappale>,
     /// Maailmassa olevat fysiikkakappaleet
     fysiikka_kappaleet: Vec<Fysiikkakappale>,
     /// Onko pelihahmo luotu jo
-    pelihahmo: bool,
+    pelihahmo: Option<Pelihahmo>,
 }
 
-impl Maailma {
+pub struct Pelihahmo {
+    pub kappale: RcKappale,
+}
+
+impl Pelihahmo {
+    pub fn new(kappale: RcKappale) -> Self {
+        Pelihahmo { kappale: kappale }
+    }
+}
+
+impl Perusmaailma {
     /// Luo uuden tyhjän maailman
     pub fn new() -> Self {
-        Maailma {
+        Perusmaailma {
             kappaleet: Vec::new(),
             fysiikka_kappaleet: Vec::new(),
-            pelihahmo: false,
+            pelihahmo: None,
         }
     }
 
@@ -43,45 +63,56 @@ impl Maailma {
         self.fysiikka_kappaleet.push(kappale);
     }
 
-    /// Lisää annetun pelihahmon maailmaan
+    /// Lisää annetun pelihahmon maailmaan, jos maailmassa ei jo ole pelihahmoa
     pub fn lisaa_pelihahmo(&mut self, pelihahmo: Kappale) {
-        if !self.pelihahmo {
-            self.kappaleet.insert(0, Rc::new(RefCell::new(pelihahmo)));
-            self.pelihahmo = true;
+        if self.pelihahmo.is_none() {
+            let pelikappale = self.lisaa_kappale(pelihahmo);
+            self.pelihahmo = Some(Pelihahmo::new(pelikappale));
+            return;
         }
     }
 
     /// Antaa pelihahmon, jos sellainen on luotu
-    pub fn anna_pelihahmo_mut(&mut self) -> Option<&mut RcKappale> {
-        if self.pelihahmo {
-            Some(&mut self.kappaleet[0])
-        } else {
-            None
+    pub fn anna_pelihahmo_mut(&mut self) -> Option<&mut Pelihahmo> {
+        match &mut self.pelihahmo {
+            None => None,
+            Some(hahmo) => Some(hahmo),
         }
     }
 
     /// Antaa pelihahmon, jos sellainen on luotu
-    pub fn anna_pelihahmo(&self) -> Option<&RcKappale> {
-        if self.pelihahmo {
-            Some(&self.kappaleet[0])
-        } else {
-            None
+    pub fn anna_pelihahmo(&self) -> Option<&Pelihahmo> {
+        match &self.pelihahmo {
+            None => None,
+            Some(hahmo) => Some(&hahmo),
         }
     }
 
     /// Onko maailmassa pelihahmo olemassa
     pub fn onko_pelihahmo(&self) -> bool {
-        self.pelihahmo
-    }
-
-    /// Antaa piirrettävät kappaleet
-    pub fn piirrettavat(&self, _sijainti: Vektori) -> &[RcKappale] {
-        &self.kappaleet
+        self.pelihahmo.is_some()
     }
 
     /// Antaa fysiikkalliset kappaleet
     pub fn fysiikalliset(&mut self) -> &mut [Fysiikkakappale] {
         &mut self.fysiikka_kappaleet
+    }
+}
+
+impl PiirrettavaMaailma for Perusmaailma {
+    /// Piirrettävät kappaleet maailmassa
+    /// # Arguments
+    /// * `sijainti` - Ilmoittaa mistä päin maailmaa halutaan piirrettävät kappaleet
+    fn piirrettavat(&self, _sijainti: Vektori) -> &[RcKappale] {
+        &self.kappaleet
+    }
+
+    /// Antaa kameran sijainnin pelimaailmassa, jos maailma haluaa ehdottaa jotakin
+    fn anna_kameran_sijainti(&self) -> Option<Vektori> {
+        match self.anna_pelihahmo() {
+            None => None,
+            Some(hahmo) => Some(hahmo.kappale.borrow().sijainti),
+        }
     }
 }
 

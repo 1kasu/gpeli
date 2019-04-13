@@ -6,6 +6,9 @@ use super::fysiikka::Fysiikkakappale;
 use super::maailma::*;
 use super::syotteet::*;
 
+/// Selkeyttää koodia, kun arvataan, että vektorilla tarkoitetaan luotavan kappaleen nopeutta ja suuntaa.
+type Nopeus = Vektori;
+
 /// Huolehtii pelin toiminnasta esim. pelimaailman alustuksesta ja pelin päivityksestä
 pub trait Paivitys {
     /// Alustaa pelin
@@ -13,14 +16,19 @@ pub trait Paivitys {
     /// * `maailma` - Pelimaailma, joka alustetaan
     /// * `syotteet` - Alustettavat syotteet
     /// * `events` - Sdl:n osa, jolta voidaan kysyä tapahtumia kuten näppäinten painalluksia
-    fn alusta(&self, maailma: &mut Maailma, syotteet: &mut Syotteet, events: &sdl2::EventPump);
+    fn alusta(&self, maailma: &mut Perusmaailma, syotteet: &mut Syotteet, events: &sdl2::EventPump);
 
     /// Päivittää annetun pelimaailman tilan annetuilla syötteillä ja päivitysajalla
     /// # Arguments
     /// * `maailma` - Pelimaailma, jonka tila päivitetään
     /// * `syotteet` - Päivityksessä käytettävät syötteet
     /// * `paivitysaika` - Aika, jonka verran pelimaailmaa paivitetaan
-    fn paivita(&self, maailma: &mut Maailma, syotteet: &mut Syotteet, paivitys_aika: &Duration);
+    fn paivita(
+        &self,
+        maailma: &mut Perusmaailma,
+        syotteet: &mut Syotteet,
+        paivitys_aika: &Duration,
+    );
 }
 
 /// Simppeli päivitys, joka huolehtii pelin toiminnasta
@@ -41,7 +49,12 @@ impl Paivitys for PelihahmonPaivitys {
     /// * `maailma` - Pelimaailma, joka alustetaan
     /// * `syotteet` - Alustettavat syotteet
     /// * `events` - Sdl:n osa, jolta voidaan kysyä tapahtumia kuten näppäinten painalluksia
-    fn alusta(&self, _maailma: &mut Maailma, syotteet: &mut Syotteet, events: &sdl2::EventPump) {
+    fn alusta(
+        &self,
+        _maailma: &mut Perusmaailma,
+        syotteet: &mut Syotteet,
+        events: &sdl2::EventPump,
+    ) {
         syotteet.lisaa_nappain(events, OIKEALLE_LIIKKUMINEN);
         syotteet.lisaa_nappain(events, VASEMMALLE_LIIKKUMINEN);
         syotteet.lisaa_nappain(events, YLOS_LIIKKUMINEN);
@@ -54,7 +67,12 @@ impl Paivitys for PelihahmonPaivitys {
     /// * `maailma` - Pelimaailma, jonka tila päivitetään
     /// * `syotteet` - Päivityksessä käytettävät syötteet
     /// * `paivitysaika` - Aika, jonka verran pelimaailmaa paivitetaan
-    fn paivita(&self, maailma: &mut Maailma, syotteet: &mut Syotteet, paivitysaika: &Duration) {
+    fn paivita(
+        &self,
+        maailma: &mut Perusmaailma,
+        syotteet: &mut Syotteet,
+        paivitysaika: &Duration,
+    ) {
         if maailma.onko_pelihahmo() {
             let mut x = 0.0;
             let mut y = 0.0;
@@ -72,14 +90,16 @@ impl Paivitys for PelihahmonPaivitys {
             if syotteet.nappain_pohjassa(ALAS_LIIKKUMINEN) {
                 y += liike;
             }
+
             maailma
                 .anna_pelihahmo_mut()
                 .unwrap()
+                .kappale
                 .borrow_mut()
                 .sijainti
                 .liiku(x, y);
 
-            let hahmon_sijainti = maailma.anna_pelihahmo().unwrap().borrow().sijainti;
+            let hahmon_sijainti = maailma.anna_pelihahmo().unwrap().kappale.borrow().sijainti;
 
             if syotteet.nappain_painettu(AMPUMINEN) {
                 let kappale = maailma.lisaa_kappale(Kappale::new(
@@ -87,7 +107,8 @@ impl Paivitys for PelihahmonPaivitys {
                     hahmon_sijainti.x + 22.5,
                     hahmon_sijainti.y + 10.0,
                 ));
-                maailma.lisaa_fysiikkakappale(Fysiikkakappale::new(Vektori::new(80.0, 0.0), kappale));
+                maailma
+                    .lisaa_fysiikkakappale(Fysiikkakappale::new(Nopeus::new(80.0, 0.0), kappale));
             }
         }
     }
@@ -114,13 +135,18 @@ impl Paivitys for Peruspaivitys {
     /// * `maailma` - Pelimaailma, joka alustetaan
     /// * `syotteet` - Alustettavat syotteet
     /// * `events` - Sdl:n osa, jolta voidaan kysyä tapahtumia kuten näppäinten painalluksia
-    fn alusta(&self, maailma: &mut Maailma, syotteet: &mut Syotteet, events: &sdl2::EventPump) {
+    fn alusta(
+        &self,
+        maailma: &mut Perusmaailma,
+        syotteet: &mut Syotteet,
+        events: &sdl2::EventPump,
+    ) {
         maailma.lisaa_pelihahmo(Kappale::new(Muoto::Nelio(20.0, 20.0), 320.0, 240.0));
         maailma.lisaa_kappale(Kappale::new(Muoto::Nelio(640.0, 20.0), 320.0, 470.0));
         maailma.lisaa_kappale(Kappale::new(Muoto::Nelio(640.0, 20.0), 320.0, 10.0));
         maailma.lisaa_kappale(Kappale::new(Muoto::Nelio(20.0, 480.0), 10.0, 240.0));
         let rk = maailma.lisaa_kappale(Kappale::new(Muoto::Nelio(20.0, 480.0), 630.0, 240.0));
-        maailma.lisaa_fysiikkakappale(Fysiikkakappale::new(Vektori::new(30.0, 0.0), rk));
+        maailma.lisaa_fysiikkakappale(Fysiikkakappale::new(Nopeus::new(30.0, 0.0), rk));
 
         self.pelihahmon_paivitys.alusta(maailma, syotteet, events);
     }
@@ -129,7 +155,12 @@ impl Paivitys for Peruspaivitys {
     /// * `maailma` - Pelimaailma, jonka tila päivitetään
     /// * `syotteet` - Päivityksessä käytettävät syötteet
     /// * `paivitysaika` - Aika, jonka verran pelimaailmaa paivitetaan
-    fn paivita(&self, maailma: &mut Maailma, syotteet: &mut Syotteet, paivitysaika: &Duration) {
+    fn paivita(
+        &self,
+        maailma: &mut Perusmaailma,
+        syotteet: &mut Syotteet,
+        paivitysaika: &Duration,
+    ) {
         self.pelihahmon_paivitys
             .paivita(maailma, syotteet, paivitysaika);
         for f in maailma.fysiikalliset() {

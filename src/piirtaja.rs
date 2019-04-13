@@ -6,16 +6,17 @@ use sdl2::rect::Rect;
 use sdl2::render::Canvas;
 
 use crate::maailma::Kappale;
-use crate::maailma::Maailma;
 use crate::maailma::Muoto;
 use crate::maailma::Vektori;
+use crate::maailma::Perusmaailma;
+use crate::maailma::PiirrettavaMaailma;
 
 /// Huolehtii pelimaailman esittämisestä käyttäjälle.
 pub trait Piirtaja {
     /// Esittää pelitilan käyttäjälle jollain tavalla.
     /// # Arguments
     /// * `maailma` - Esitettävä pelimaailma
-    fn piirra_maailma(&mut self, maailma: &Maailma) -> Result<(), String>;
+    fn piirra_maailma(&mut self, maailma: &Perusmaailma) -> Result<(), String>;
     /// Asettaa kameran sijainnin
     /// # Arguments
     /// * `kameran_sijainti` - Piirtavan kameran sijainti
@@ -141,7 +142,7 @@ impl Piirtaja for Peruspiirtaja {
     /// Piirtää kuvan pelimaailman tilasta.
     /// # Arguments
     /// * `maailma` - Pelimaailma, jonka pohjalta kuva piirretään
-    fn piirra_maailma(&mut self, maailma: &Maailma) -> Result<(), String> {
+    fn piirra_maailma(&mut self, maailma: &Perusmaailma) -> Result<(), String> {
         // Lasketaan kameran aiheuttama muutos
         let muutos = self.kameran_aiheuttama_muutos()?;
 
