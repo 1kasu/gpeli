@@ -144,6 +144,12 @@ impl<T> Vektori<T> {
     }
 }
 
+impl<T> Default for Vektori<T> where T: Default{
+    fn default() -> Self {
+        Vektori { x: Default::default(), y: Default::default() }
+    }
+}
+
 impl<T: std::ops::AddAssign> Vektori<T> {
     /// Siirtää sijaintia annetun verran
     /// # Arguments
@@ -191,6 +197,14 @@ impl<T: Sub<Output = T>> Sub for Vektori<T> {
             x: self.x - other.x,
             y: self.y - other.y,
         }
+    }
+}
+
+impl Vektori<f32> {
+    /// Antaa annetun vektorin pituuden
+    pub fn pituus(&self) -> f32 {
+        // Näyttää kaamealta...
+        (f32::powf(self.x, 2.0) + f32::powf(self.y, 2.0)).sqrt()
     }
 }
 

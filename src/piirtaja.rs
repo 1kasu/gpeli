@@ -178,6 +178,9 @@ impl Piirtaja for Peruspiirtaja {
     /// # Arguments
     /// * `maailma` - Pelimaailma, jonka pohjalta kuva piirretään
     fn piirra_maailma(&mut self, maailma: &Perusmaailma) -> Result<(), String> {
+        if let Some(sijainti) = maailma.anna_kameran_sijainti(){
+            self.aseta_kameran_sijainti(sijainti)?;
+        }
         // Lasketaan kameran aiheuttama muutos
         let muutos = self.kameran_aiheuttama_muutos()?;
 

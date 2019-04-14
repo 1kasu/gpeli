@@ -5,6 +5,7 @@ use std::rc::Rc;
 use std::time::Duration;
 
 use crate::fysiikka::Fysiikallinen;
+use crate::fysiikka::Fysiikka;
 use crate::fysiikka::Fysiikkakappale;
 use crate::maailma::*;
 use crate::piirtaja::PiirrettavaKappale;
@@ -150,6 +151,21 @@ fn lisaa_kappale(
     r_kappale
 }
 
+fn lisaa_fysiikka_kappale(
+    maailma: &mut Perusmaailma,
+    kappale: Kappale,
+    vari: Color,
+) -> Rc<RefCell<Kappale>> {
+    let r_kappale = maailma.lisaa_kappale(kappale);
+    maailma.lisaa_piirrettava_kappale(PiirrettavaKappale::YksivarinenKappale {
+        kappale: Rc::clone(&r_kappale),
+        vari: vari,
+    });
+    let f_kappale = Fysiikkakappale::new(Default::default(), Rc::clone(&r_kappale));
+    maailma.lisaa_fysiikkakappale(f_kappale);
+    r_kappale
+}
+
 impl Paivitys for Peruspaivitys {
     /// Alustaa pelin
     /// # Arguments
@@ -162,29 +178,45 @@ impl Paivitys for Peruspaivitys {
         syotteet: &mut Syotteet,
         events: &sdl2::EventPump,
     ) {
-        let esteiden_vari = Color::RGB(20, 20, 200);
+        // Pelihahmo
         let _rk = lisaa_kappale(
             maailma,
             Kappale::new(Muoto::Nelio(20.0, 20.0), 320.0, 240.0),
             Color::RGB(255, 30, 30),
         );
         maailma.lisaa_pelihahmo(Pelihahmo::new(Rc::clone(&_rk)));
-        let _rk = lisaa_kappale(
+
+        let kappale_a = Kappale::new(Muoto::Nelio(20.0, 20.0), 320.0, 240.0);
+        let leveys_a = 20.0;
+        let korkeus_a = 20.0;
+
+        let vasen_a = kappale_a.sijainti.x;
+        let oikea_a = kappale_a.sijainti.x + leveys_a;
+        let yla_a = kappale_a.sijainti.y;
+        let ala_a = kappale_a.sijainti.y + korkeus_a;
+        lisaa_kappale(maailma, Kappale::new(Muoto::Nelio(2.0,2.0), vasen_a, yla_a), Color::RGB(255,255,255));
+        lisaa_kappale(maailma, Kappale::new(Muoto::Nelio(2.0,2.0), oikea_a, yla_a), Color::RGB(0,0,255));
+        lisaa_kappale(maailma, Kappale::new(Muoto::Nelio(2.0,2.0), vasen_a, ala_a), Color::RGB(0,255,0));
+        lisaa_kappale(maailma, Kappale::new(Muoto::Nelio(2.0,2.0), oikea_a, ala_a), Color::RGB(0,0,0));
+
+        // Seinät
+        let esteiden_vari = Color::RGB(20, 20, 200);
+        let _rk = lisaa_fysiikka_kappale(
             maailma,
             Kappale::new(Muoto::Nelio(640.0, 20.0), 320.0, 470.0),
             esteiden_vari,
         );
-        let _rk = lisaa_kappale(
+        let _rk = lisaa_fysiikka_kappale(
             maailma,
             Kappale::new(Muoto::Nelio(640.0, 20.0), 320.0, 10.0),
             esteiden_vari,
         );
-        let _rk = lisaa_kappale(
+        let _rk = lisaa_fysiikka_kappale(
             maailma,
             Kappale::new(Muoto::Nelio(20.0, 480.0), 10.0, 240.0),
             esteiden_vari,
         );
-        let _rk = lisaa_kappale(
+        let _rk = lisaa_fysiikka_kappale(
             maailma,
             Kappale::new(Muoto::Nelio(20.0, 480.0), 630.0, 240.0),
             esteiden_vari,
@@ -205,8 +237,8 @@ impl Paivitys for Peruspaivitys {
     ) {
         self.pelihahmon_paivitys
             .paivita(maailma, syotteet, paivitysaika);
-        for f in maailma.fysiikalliset() {
-            f.paivita_sijainti(paivitysaika);
-        }
+
+        let fysiikka = Fysiikka;
+        fysiikka.laske_uudet_sijainnit(maailma.fysiikalliset(), paivitysaika);
     }
 }
