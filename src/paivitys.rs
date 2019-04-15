@@ -4,13 +4,13 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use std::time::Duration;
 
+use crate::fysiikka::Fysiikallinen;
 use crate::fysiikka::Fysiikka;
 use crate::fysiikka::Fysiikkakappale;
-use crate::fysiikka::Fysiikallinen;
+use crate::maailma::Tagi::*;
 use crate::maailma::*;
 use crate::piirtaja::PiirrettavaKappale;
 use crate::syotteet::*;
-use crate::maailma::Tagi::*;
 
 /// Selkeyttää koodia, kun arvataan, että vektorilla tarkoitetaan luotavan kappaleen nopeutta ja suuntaa.
 type Nopeus = Vektori;
@@ -114,7 +114,7 @@ impl Paivitys for PelihahmonPaivitys {
                         Muoto::Nelio(5.0, 5.0),
                         hahmon_sijainti.x + 22.5,
                         hahmon_sijainti.y + 10.0,
-                        Ammus
+                        Ammus,
                     ),
                     Color::RGB(0, 255, 255),
                 );
@@ -231,11 +231,16 @@ impl Paivitys for Peruspaivitys {
 
         let mut fysiikka = Fysiikka::new();
         fysiikka.laske_uudet_sijainnit(maailma.fysiikalliset(), paivitysaika);
-        
+
         //let mut poistettavat = Vec::new();
-        for tormays in fysiikka.tormaykset.anna_tormaykset(){
-            if maailma.fysiikalliset()[tormays.indeksi].anna_tagi() == Ammus{
+        for tormays in fysiikka.tormaykset.anna_tormaykset() {
+            if maailma.fysiikalliset()[tormays.indeksi].anna_tagi() == Ammus {
+                //println!("Yritetään poistaa ammus");
+                let kopio = Rc::clone(maailma.fysiikalliset()[tormays.indeksi].anna_kappale());
+                maailma.lisaa_poistettava(kopio);
             }
         }
+
+        maailma.poista_poistettavat();
     }
 }

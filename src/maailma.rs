@@ -1,7 +1,7 @@
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::ops::{Add, Mul, Sub};
 use std::rc::Rc;
-use std::collections::HashMap;
 
 use crate::fysiikka::Fysiikkakappale;
 use crate::piirtaja::PiirrettavaKappale;
@@ -30,7 +30,7 @@ pub struct Perusmaailma {
     /// Mahdollinen pelattava hahmo
     pelihahmo: Option<Pelihahmo>,
     /// Poistettavat kappaleet
-    poistettavat: Vec<RcKappale>
+    poistettavat: Vec<RcKappale>,
 }
 
 pub struct Pelihahmo {
@@ -51,7 +51,7 @@ impl Perusmaailma {
             fysiikka_kappaleet: Vec::new(),
             piirrettavat_kappaleet: Vec::new(),
             pelihahmo: None,
-            poistettavat: Vec::new()
+            poistettavat: Vec::new(),
         }
     }
 
@@ -110,18 +110,28 @@ impl Perusmaailma {
     pub fn fysiikalliset(&mut self) -> &mut [Fysiikkakappale] {
         &mut self.fysiikka_kappaleet
     }
-    
+
     /// Lisää kappaleen poistettavien kappaleiden listaan.
     pub fn lisaa_poistettava(&mut self, poistettava: RcKappale) {
         self.poistettavat.push(poistettava);
     }
-    
+
     /// Poistaa poistettaviksi merkityt kappaleet kappaleisiin viittajen ominaisuuksien kanssa
-    pub fn poista_poistettavat(&mut self){
-        while let Some(poistettava) = self.poistettavat.pop(){
-            
+    pub fn poista_poistettavat(&mut self) {
+        while let Some(poistettava) = self.poistettavat.pop() {
+            self.fysiikka_kappaleet
+                .retain(|x| !std::ptr::eq(x.anna_kappale().as_ptr(), poistettava.as_ptr()));
+            self.piirrettavat_kappaleet
+                .retain(|x| !std::ptr::eq(x.anna_kappale().as_ptr(), poistettava.as_ptr()));
+            self.kappaleet
+                .retain(|x| !std::ptr::eq(x.as_ptr(), poistettava.as_ptr()));
         }
     }
+}
+
+pub trait Lisaosa {
+    /// Antaa lisäosan käyttämän kappaleen
+    fn anna_kappale(&self) -> &RcKappale;
 }
 
 impl PiirrettavaMaailma for Perusmaailma {
@@ -160,9 +170,15 @@ impl<T> Vektori<T> {
     }
 }
 
-impl<T> Default for Vektori<T> where T: Default{
+impl<T> Default for Vektori<T>
+where
+    T: Default,
+{
     fn default() -> Self {
-        Vektori { x: Default::default(), y: Default::default() }
+        Vektori {
+            x: Default::default(),
+            y: Default::default(),
+        }
     }
 }
 
@@ -247,7 +263,7 @@ pub struct Kappale {
     pub muoto: Muoto,
     /// Kappaleen sijainti
     pub sijainti: Vektori<f32>,
-    pub tagi: Tagi
+    pub tagi: Tagi,
 }
 
 impl Kappale {
@@ -261,12 +277,12 @@ impl Kappale {
             Muoto::Nelio(xl, yl) => Kappale {
                 muoto: muoto,
                 sijainti: Vektori::new(x - xl / 2.0, y - yl / 2.0),
-                tagi: tagi
+                tagi: tagi,
             },
             Muoto::Ympyra(r) => Kappale {
                 muoto: muoto,
                 sijainti: Vektori::new(x - r, y - r),
-                tagi: tagi
+                tagi: tagi,
             },
         }
     }

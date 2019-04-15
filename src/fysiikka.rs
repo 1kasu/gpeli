@@ -6,6 +6,7 @@ use super::maailma::Kappale;
 use super::maailma::Muoto;
 use super::maailma::Tagi;
 use super::maailma::Vektori;
+use crate::maailma::Lisaosa;
 
 type RcKappale = Rc<RefCell<Kappale>>;
 
@@ -29,8 +30,6 @@ pub trait Fysiikallinen {
 
     /// Antaa kohteen muodon
     fn anna_muoto(&self) -> Muoto;
-    
-    fn anna_tagi(&self) -> Tagi;
 
     /// Laskee kohteen uuden sijainnin ja palauttaa sen
     fn laske_uusi_sijainti(&self, paivitysaika: &Duration) -> Vektori<f32>;
@@ -49,6 +48,18 @@ impl Fysiikkakappale {
             kappale: kappale,
             nopeus: nopeus,
         }
+    }
+
+
+
+    pub fn anna_tagi(&self) -> Tagi {
+        self.kappale.borrow().tagi
+    }
+}
+
+impl Lisaosa for Fysiikkakappale {
+    fn anna_kappale(&self) -> &RcKappale {
+        &self.kappale
     }
 }
 
@@ -75,10 +86,6 @@ impl Fysiikallinen for Fysiikkakappale {
     /// * `sijainti` - Kohteen uusi sijainti
     fn aseta_sijainti(&mut self, sijainti: Vektori) {
         self.kappale.borrow_mut().sijainti = sijainti;
-    }
-    
-    fn anna_tagi(&self) -> Tagi{
-        self.kappale.borrow().tagi
     }
 
     /// Antaa kohteen muodon
@@ -154,15 +161,16 @@ impl Tormaystieto {
     }
 }
 
-pub struct Fysiikka{
-    pub tormaykset: Tormaystiedot   
+pub struct Fysiikka {
+    pub tormaykset: Tormaystiedot,
 }
-impl Fysiikka{
-    pub fn new() -> Self{
-        Fysiikka{tormaykset: Default::default()}
+impl Fysiikka {
+    pub fn new() -> Self {
+        Fysiikka {
+            tormaykset: Default::default(),
+        }
     }
 }
-
 
 impl Fysiikka {
     /// Laskee kaikille annetuille fysiikkakappaleille uuden sijainnin ja palauttaa tiedot tapahtuneista törmäyksistä
@@ -173,7 +181,7 @@ impl Fysiikka {
         &mut self,
         kappaleet: &mut [Fysiikkakappale],
         paivitysaika: &Duration,
-    ){
+    ) {
         let mut vanhat_sijainnit = Vec::new();
         self.tormaykset = Tormaystiedot::new();
 
@@ -197,7 +205,8 @@ impl Fysiikka {
                 ) {
                     // Törmäys tapahtuu
                     // Merkitään törmäys muistiin
-                    self.tormaykset.lisaa_tormays(i, kappaleet[j].kappale.borrow().tagi)
+                    self.tormaykset
+                        .lisaa_tormays(i, kappaleet[j].kappale.borrow().tagi)
                 }
             }
         }

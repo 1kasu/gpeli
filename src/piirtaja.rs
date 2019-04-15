@@ -8,6 +8,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use crate::maailma::Kappale;
+use crate::maailma::Lisaosa;
 use crate::maailma::Muoto;
 use crate::maailma::Perusmaailma;
 use crate::maailma::PiirrettavaMaailma;
@@ -39,6 +40,14 @@ type RcKappale = Rc<RefCell<Kappale>>;
 pub enum PiirrettavaKappale {
     /// Yksivärinen kappale, jolla on väri ja kappale (jolla on muoto, koko, sijainti...)
     YksivarinenKappale { kappale: RcKappale, vari: Color },
+}
+
+impl Lisaosa for PiirrettavaKappale {
+    fn anna_kappale(&self) -> &RcKappale {
+        match self {
+            PiirrettavaKappale::YksivarinenKappale { kappale, .. } => kappale,
+        }
+    }
 }
 
 /// Kohde, joka on piirrettävissä canvakselle
@@ -178,7 +187,7 @@ impl Piirtaja for Peruspiirtaja {
     /// # Arguments
     /// * `maailma` - Pelimaailma, jonka pohjalta kuva piirretään
     fn piirra_maailma(&mut self, maailma: &Perusmaailma) -> Result<(), String> {
-        if let Some(sijainti) = maailma.anna_kameran_sijainti(){
+        if let Some(sijainti) = maailma.anna_kameran_sijainti() {
             self.aseta_kameran_sijainti(sijainti)?;
         }
         // Lasketaan kameran aiheuttama muutos
