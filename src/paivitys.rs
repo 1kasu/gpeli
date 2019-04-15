@@ -4,12 +4,13 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use std::time::Duration;
 
-use crate::fysiikka::Fysiikallinen;
 use crate::fysiikka::Fysiikka;
 use crate::fysiikka::Fysiikkakappale;
+use crate::fysiikka::Fysiikallinen;
 use crate::maailma::*;
 use crate::piirtaja::PiirrettavaKappale;
 use crate::syotteet::*;
+use crate::maailma::Tagi::*;
 
 /// Selkeyttää koodia, kun arvataan, että vektorilla tarkoitetaan luotavan kappaleen nopeutta ja suuntaa.
 type Nopeus = Vektori;
@@ -113,6 +114,7 @@ impl Paivitys for PelihahmonPaivitys {
                         Muoto::Nelio(5.0, 5.0),
                         hahmon_sijainti.x + 22.5,
                         hahmon_sijainti.y + 10.0,
+                        Ammus
                     ),
                     Color::RGB(0, 255, 255),
                 );
@@ -138,6 +140,7 @@ impl Peruspaivitys {
     }
 }
 
+/// Lisää kappaleen maailmaan
 fn lisaa_kappale(
     maailma: &mut Perusmaailma,
     kappale: Kappale,
@@ -151,6 +154,7 @@ fn lisaa_kappale(
     r_kappale
 }
 
+/// Lisää fysiikkakappaleen kappaleineen maailmaan
 fn lisaa_fysiikka_kappale(
     maailma: &mut Perusmaailma,
     kappale: Kappale,
@@ -181,44 +185,31 @@ impl Paivitys for Peruspaivitys {
         // Pelihahmo
         let _rk = lisaa_kappale(
             maailma,
-            Kappale::new(Muoto::Nelio(20.0, 20.0), 320.0, 240.0),
+            Kappale::new(Muoto::Nelio(20.0, 20.0), 320.0, 240.0, Pelaaja),
             Color::RGB(255, 30, 30),
         );
         maailma.lisaa_pelihahmo(Pelihahmo::new(Rc::clone(&_rk)));
-
-        let kappale_a = Kappale::new(Muoto::Nelio(20.0, 20.0), 320.0, 240.0);
-        let leveys_a = 20.0;
-        let korkeus_a = 20.0;
-
-        let vasen_a = kappale_a.sijainti.x;
-        let oikea_a = kappale_a.sijainti.x + leveys_a;
-        let yla_a = kappale_a.sijainti.y;
-        let ala_a = kappale_a.sijainti.y + korkeus_a;
-        lisaa_kappale(maailma, Kappale::new(Muoto::Nelio(2.0,2.0), vasen_a, yla_a), Color::RGB(255,255,255));
-        lisaa_kappale(maailma, Kappale::new(Muoto::Nelio(2.0,2.0), oikea_a, yla_a), Color::RGB(0,0,255));
-        lisaa_kappale(maailma, Kappale::new(Muoto::Nelio(2.0,2.0), vasen_a, ala_a), Color::RGB(0,255,0));
-        lisaa_kappale(maailma, Kappale::new(Muoto::Nelio(2.0,2.0), oikea_a, ala_a), Color::RGB(0,0,0));
 
         // Seinät
         let esteiden_vari = Color::RGB(20, 20, 200);
         let _rk = lisaa_fysiikka_kappale(
             maailma,
-            Kappale::new(Muoto::Nelio(640.0, 20.0), 320.0, 470.0),
+            Kappale::new(Muoto::Nelio(640.0, 20.0), 320.0, 470.0, Seina),
             esteiden_vari,
         );
         let _rk = lisaa_fysiikka_kappale(
             maailma,
-            Kappale::new(Muoto::Nelio(640.0, 20.0), 320.0, 10.0),
+            Kappale::new(Muoto::Nelio(640.0, 20.0), 320.0, 10.0, Seina),
             esteiden_vari,
         );
         let _rk = lisaa_fysiikka_kappale(
             maailma,
-            Kappale::new(Muoto::Nelio(20.0, 480.0), 10.0, 240.0),
+            Kappale::new(Muoto::Nelio(20.0, 480.0), 10.0, 240.0, Seina),
             esteiden_vari,
         );
         let _rk = lisaa_fysiikka_kappale(
             maailma,
-            Kappale::new(Muoto::Nelio(20.0, 480.0), 630.0, 240.0),
+            Kappale::new(Muoto::Nelio(20.0, 480.0), 630.0, 240.0, Seina),
             esteiden_vari,
         );
 
@@ -238,7 +229,13 @@ impl Paivitys for Peruspaivitys {
         self.pelihahmon_paivitys
             .paivita(maailma, syotteet, paivitysaika);
 
-        let fysiikka = Fysiikka;
+        let mut fysiikka = Fysiikka::new();
         fysiikka.laske_uudet_sijainnit(maailma.fysiikalliset(), paivitysaika);
+        
+        //let mut poistettavat = Vec::new();
+        for tormays in fysiikka.tormaykset.anna_tormaykset(){
+            if maailma.fysiikalliset()[tormays.indeksi].anna_tagi() == Ammus{
+            }
+        }
     }
 }

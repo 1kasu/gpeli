@@ -1,6 +1,7 @@
 use std::cell::RefCell;
 use std::ops::{Add, Mul, Sub};
 use std::rc::Rc;
+use std::collections::HashMap;
 
 use crate::fysiikka::Fysiikkakappale;
 use crate::piirtaja::PiirrettavaKappale;
@@ -28,6 +29,8 @@ pub struct Perusmaailma {
     piirrettavat_kappaleet: Vec<PiirrettavaKappale>,
     /// Mahdollinen pelattava hahmo
     pelihahmo: Option<Pelihahmo>,
+    /// Poistettavat kappaleet
+    poistettavat: Vec<RcKappale>
 }
 
 pub struct Pelihahmo {
@@ -48,6 +51,7 @@ impl Perusmaailma {
             fysiikka_kappaleet: Vec::new(),
             piirrettavat_kappaleet: Vec::new(),
             pelihahmo: None,
+            poistettavat: Vec::new()
         }
     }
 
@@ -105,6 +109,18 @@ impl Perusmaailma {
     /// Antaa fysiikkalliset kappaleet
     pub fn fysiikalliset(&mut self) -> &mut [Fysiikkakappale] {
         &mut self.fysiikka_kappaleet
+    }
+    
+    /// Lisää kappaleen poistettavien kappaleiden listaan.
+    pub fn lisaa_poistettava(&mut self, poistettava: RcKappale) {
+        self.poistettavat.push(poistettava);
+    }
+    
+    /// Poistaa poistettaviksi merkityt kappaleet kappaleisiin viittajen ominaisuuksien kanssa
+    pub fn poista_poistettavat(&mut self){
+        while let Some(poistettava) = self.poistettavat.pop(){
+            
+        }
     }
 }
 
@@ -202,7 +218,7 @@ impl<T: Sub<Output = T>> Sub for Vektori<T> {
 
 impl Vektori<f32> {
     /// Antaa annetun vektorin pituuden
-    pub fn pituus(&self) -> f32 {
+    pub fn pituus(self) -> f32 {
         // Näyttää kaamealta...
         (f32::powf(self.x, 2.0) + f32::powf(self.y, 2.0)).sqrt()
     }
@@ -217,12 +233,21 @@ pub enum Muoto {
     Ympyra(f32),
 }
 
+#[derive(PartialEq, Copy, Clone)]
+pub enum Tagi {
+    Vihollinen,
+    Seina,
+    Ammus,
+    Pelaaja,
+}
+
 /// Kappale, jolla on muoto ja sijainti
 pub struct Kappale {
     /// Kappaleen muoto
     pub muoto: Muoto,
     /// Kappaleen sijainti
     pub sijainti: Vektori<f32>,
+    pub tagi: Tagi
 }
 
 impl Kappale {
@@ -231,15 +256,17 @@ impl Kappale {
     /// * `muoto` - Kappaleen muoto
     /// * `x` - Kappaleen keskipisteen sijainnin x-koordinaatti
     /// * `y` - Kappaleen keskipisteen sijainnin y-koordinaatti
-    pub fn new(muoto: Muoto, x: f32, y: f32) -> Self {
+    pub fn new(muoto: Muoto, x: f32, y: f32, tagi: Tagi) -> Self {
         match muoto {
             Muoto::Nelio(xl, yl) => Kappale {
                 muoto: muoto,
                 sijainti: Vektori::new(x - xl / 2.0, y - yl / 2.0),
+                tagi: tagi
             },
             Muoto::Ympyra(r) => Kappale {
                 muoto: muoto,
                 sijainti: Vektori::new(x - r, y - r),
+                tagi: tagi
             },
         }
     }
