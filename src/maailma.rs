@@ -1,5 +1,4 @@
 use std::cell::RefCell;
-use std::collections::HashMap;
 use std::ops::{Add, Mul, Sub};
 use std::rc::Rc;
 
@@ -7,6 +6,10 @@ use crate::fysiikka::Fysiikkakappale;
 use crate::piirtaja::PiirrettavaKappale;
 
 type RcKappale = Rc<RefCell<Kappale>>;
+
+pub trait LisaosienAntaja {
+    fn anna_piirrettavyys(&mut self, kappale: &RcKappale) -> Option<&mut PiirrettavaKappale>;
+}
 
 pub trait PiirrettavaMaailma {
     /// Piirrettävät kappaleet maailmassa
@@ -140,11 +143,22 @@ impl Perusmaailma {
                 .retain(|x| !std::ptr::eq(x.as_ptr(), poistettava.as_ptr()));
             // Poistaa kappaleen pelihahmosta
             if let Some(hahmo) = &mut self.pelihahmo {
-                if std::ptr::eq(hahmo.anna_kappale().as_ptr(), poistettava.as_ptr()){
+                if std::ptr::eq(hahmo.anna_kappale().as_ptr(), poistettava.as_ptr()) {
                     self.pelihahmo = None
                 }
             }
         }
+    }
+}
+
+impl LisaosienAntaja for Perusmaailma {
+    fn anna_piirrettavyys(&mut self, kappale: &RcKappale) -> Option<&mut PiirrettavaKappale> {
+        for piirrettava in &mut self.piirrettavat_kappaleet {
+            if std::ptr::eq(piirrettava.anna_kappale().as_ptr(), kappale.as_ptr()) {
+                return Some(piirrettava);
+            }
+        }
+        None
     }
 }
 

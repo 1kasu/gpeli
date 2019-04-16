@@ -245,9 +245,18 @@ impl Paivitys for Peruspaivitys {
         //let mut poistettavat = Vec::new();
         for tormays in fysiikka.tormaykset.anna_tormaykset() {
             if maailma.fysiikalliset()[tormays.indeksi].anna_tagi() == Ammus {
+                let f_kappale = &maailma.fysiikalliset()[tormays.indeksi];
                 //println!("Yritetään poistaa ammus");
-                let kopio = Rc::clone(maailma.fysiikalliset()[tormays.indeksi].anna_kappale());
-                maailma.lisaa_poistettava(kopio);
+                let kopio = Rc::clone(f_kappale.anna_kappale());
+                
+                if let Some(piirto) = maailma.anna_piirrettavyys(&kopio){
+                    if let PiirrettavaKappale::YksivarinenKappale{ref mut vari, ..} = piirto{
+                        *vari = Color::RGB(198, 99, 137);
+                    }
+                    
+                }
+                
+                //maailma.lisaa_poistettava(kopio);
             }
         }
 
