@@ -4,7 +4,6 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use std::time::Duration;
 
-use crate::fysiikka::Fysiikallinen;
 use crate::fysiikka::Fysiikka;
 use crate::fysiikka::Fysiikkakappale;
 use crate::maailma::Tagi::*;
@@ -83,6 +82,7 @@ impl Paivitys for PelihahmonPaivitys {
             let mut x = 0.0;
             let mut y = 0.0;
 
+            // Liikutetaan pelihahmoa
             let liike = paivitysaika.as_micros() as f32 * 0.0002;
             if syotteet.nappain_pohjassa(OIKEALLE_LIIKKUMINEN) {
                 x += liike;
@@ -107,6 +107,7 @@ impl Paivitys for PelihahmonPaivitys {
 
             let hahmon_sijainti = maailma.anna_pelihahmo().unwrap().kappale.borrow().sijainti;
 
+            // Pelihahmon ampuminen
             if syotteet.nappain_painettu(AMPUMINEN) {
                 let r_kappale = lisaa_kappale(
                     maailma,
@@ -140,7 +141,11 @@ impl Peruspaivitys {
     }
 }
 
-/// Lisää kappaleen maailmaan
+/// Lisää kappaleen maailmaan, luoden sille piirrettävän lisäosan
+/// # Arguments
+/// * `maailma` - Pelimaailma, johon kappale lisätään
+/// * `kappale` - Lisättävä kappale
+/// * `vari` - Lisättävän kappaleen väri
 fn lisaa_kappale(
     maailma: &mut Perusmaailma,
     kappale: Kappale,
@@ -155,6 +160,10 @@ fn lisaa_kappale(
 }
 
 /// Lisää fysiikkakappaleen kappaleineen maailmaan
+/// /// # Arguments
+/// * `maailma` - Pelimaailma, johon kappale lisätään
+/// * `kappale` - Lisättävä kappale
+/// * `vari` - Lisättävän kappaleen väri
 fn lisaa_fysiikka_kappale(
     maailma: &mut Perusmaailma,
     kappale: Kappale,
@@ -215,6 +224,7 @@ impl Paivitys for Peruspaivitys {
 
         self.pelihahmon_paivitys.alusta(maailma, syotteet, events);
     }
+
     /// Päivittää annetun pelimaailman tilan annetuilla syötteillä ja päivitysajalla
     /// # Arguments
     /// * `maailma` - Pelimaailma, jonka tila päivitetään

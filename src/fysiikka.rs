@@ -32,9 +32,13 @@ pub trait Fysiikallinen {
     fn anna_muoto(&self) -> Muoto;
 
     /// Laskee kohteen uuden sijainnin ja palauttaa sen
+    /// # Arguments
+    /// * `paivitysaika` - Aika, jonka verran kappaleen sijaintia päivitetään
     fn laske_uusi_sijainti(&self, paivitysaika: &Duration) -> Vektori<f32>;
 }
 
+/// Fysiikka lisäosa tavalliselle kappaleelle. Kertoo käytännössä, että
+/// kappale voi törmätä ja sillä on nopeus
 pub struct Fysiikkakappale {
     /// Varsinainen kappale
     kappale: RcKappale,
@@ -43,6 +47,10 @@ pub struct Fysiikkakappale {
 }
 
 impl Fysiikkakappale {
+    /// Antaa uuden fysiikkakappaleen, jolla on annettu nopeus ja annettu kappale
+    /// # Arguments
+    /// * `nopeus` - Kappaleen alkunopeus
+    /// * `kappale` - Kappale, jolle lisätään fysiikka
     pub fn new(nopeus: Vektori, kappale: RcKappale) -> Self {
         Fysiikkakappale {
             kappale: kappale,
@@ -50,14 +58,14 @@ impl Fysiikkakappale {
         }
     }
 
-
-
+    /// Antaa fysiikkakappaleen tagin
     pub fn anna_tagi(&self) -> Tagi {
         self.kappale.borrow().tagi
     }
 }
 
 impl Lisaosa for Fysiikkakappale {
+    /// Antaa fysiikkakappaleen käyttämän kappaleen
     fn anna_kappale(&self) -> &RcKappale {
         &self.kappale
     }
@@ -101,12 +109,16 @@ impl Fysiikallinen for Fysiikkakappale {
     }
 }
 
+/// Sisältää listan kaikista tapahtuneista törmäyksistä. Perustuu indekseihin, joten
+/// ei ole pitkään ajankohtainen.
 #[derive(Default)]
 pub struct Tormaystiedot {
+    /// Lista törmäyksistä ja niiden tiedoista
     tormays_tiedot: Vec<Tormaystieto>,
 }
 
 impl Tormaystiedot {
+    /// Antaa uuden törmäystiedot otuksen
     pub fn new() -> Self {
         Tormaystiedot {
             tormays_tiedot: Vec::new(),
@@ -114,6 +126,9 @@ impl Tormaystiedot {
     }
 
     /// Lisää törmäyksen tägin törmäystietoon ja tarvittaessa luo törmäystiedon
+    /// # Arguments
+    /// * `indeksi` - törmänneen kappaleen indeksi
+    /// * `tagi` - Törmätyn kappaleen tagi
     pub fn lisaa_tormays(&mut self, indeksi: usize, tagi: Tagi) {
         match self
             .tormays_tiedot
@@ -135,12 +150,19 @@ impl Tormaystiedot {
     }
 }
 
+/// Sisältää yksittäisen kappaleen tiedot, että mihin kaikkiin tageihin
+/// on törmännyt.
 pub struct Tormaystieto {
+    /// Törmänneen kappaleen indeksi
     pub indeksi: usize,
+    /// Lista kohteiden tageista, joihin on törmätty
     tormatyt_kohteet: Vec<Tagi>,
 }
 
 impl Tormaystieto {
+    /// Luo uuden törmäystiedon annetulla indeksillä
+    /// # Arguments
+    /// * `indeksi` - Törmääjän indeksi
     pub fn new(indeksi: usize) -> Self {
         Tormaystieto {
             indeksi: indeksi,
@@ -148,7 +170,9 @@ impl Tormaystieto {
         }
     }
 
-    /// Lisää annetun tagin
+    /// Lisää annetun tagin, jos kyseinen tagi ei jo ole lisätty
+    /// # Arguments
+    /// * `lisattava_tagi` - Törmätyn kohteen tagi
     pub fn lisaa_tagi(&mut self, lisattava_tagi: Tagi) {
         if !self.tormatyt_kohteet.contains(&lisattava_tagi) {
             self.tormatyt_kohteet.push(lisattava_tagi)
@@ -161,10 +185,15 @@ impl Tormaystieto {
     }
 }
 
+/// Fysiikka otus, joka muistaa jotakin fysiikan päivitysksistä
+#[derive(Default)]
 pub struct Fysiikka {
+    /// Viimeisimmän fysiikkapäivityksen aikana tapahtuneet törmäykset
     pub tormaykset: Tormaystiedot,
 }
+
 impl Fysiikka {
+    /// Luo uuden fysiikan
     pub fn new() -> Self {
         Fysiikka {
             tormaykset: Default::default(),
@@ -220,6 +249,9 @@ impl Fysiikka {
 }
 
 /// Tarkistaa törmäävätkö kaksi annettua kappaletta toisiinsa
+/// # Arguments
+/// * `kappale_a` - Kappale, joka ns törmää
+/// * `kappale_b` - Kappale, joka ns tulee törmätyksi
 fn ovatko_paallekkain(kappale_a: &Kappale, kappale_b: &Kappale) -> bool {
     match (kappale_a.muoto, kappale_b.muoto) {
         (Muoto::Nelio(leveys_a, korkeus_a), Muoto::Nelio(leveys_b, korkeus_b)) => {
@@ -236,6 +268,8 @@ fn ovatko_paallekkain(kappale_a: &Kappale, kappale_b: &Kappale) -> bool {
         (Muoto::Ympyra(sade_a), Muoto::Ympyra(sade_b)) => {
             (kappale_a.sijainti - kappale_b.sijainti).pituus() < (sade_a + sade_b)
         }
-        _ => (false),
+        // TODO: Määrittele törmäykset ympyrän ja neliö välille
+        (Muoto::Ympyra(_sade), Muoto::Nelio(_leveys, _korkeus)) => false,
+        (Muoto::Nelio(_leveys, _korkeus), Muoto::Ympyra(_sade)) => false,
     }
 }

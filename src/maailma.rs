@@ -33,13 +33,21 @@ pub struct Perusmaailma {
     poistettavat: Vec<RcKappale>,
 }
 
+/// Pelissä oleva pelaajan ohjaama hahmo. Esimerkiksi kamera seuraa automaattisesti tätä.
 pub struct Pelihahmo {
+    /// Pelihahmon käyttämä kappale
     pub kappale: RcKappale,
 }
 
 impl Pelihahmo {
     pub fn new(kappale: RcKappale) -> Self {
         Pelihahmo { kappale: kappale }
+    }
+}
+
+impl Lisaosa for Pelihahmo {
+    fn anna_kappale(&self) -> &RcKappale {
+        &self.kappale
     }
 }
 
@@ -112,23 +120,37 @@ impl Perusmaailma {
     }
 
     /// Lisää kappaleen poistettavien kappaleiden listaan.
+    /// # Arguments
+    /// * `poistettava` - Kappale, joka merkitään poistettavaksi
     pub fn lisaa_poistettava(&mut self, poistettava: RcKappale) {
         self.poistettavat.push(poistettava);
     }
 
-    /// Poistaa poistettaviksi merkityt kappaleet kappaleisiin viittajen ominaisuuksien kanssa
+    /// Poistaa poistettaviksi merkityt kappaleet kappaleisiin viittaavien ominaisuuksien kanssa
     pub fn poista_poistettavat(&mut self) {
         while let Some(poistettava) = self.poistettavat.pop() {
+            // Poistaa kappaleen fysiikkakappaleista
             self.fysiikka_kappaleet
                 .retain(|x| !std::ptr::eq(x.anna_kappale().as_ptr(), poistettava.as_ptr()));
+            // Poistaa kappaleen piirrettävistä
             self.piirrettavat_kappaleet
                 .retain(|x| !std::ptr::eq(x.anna_kappale().as_ptr(), poistettava.as_ptr()));
+            // Poistaa kappaleen kappaleista
             self.kappaleet
                 .retain(|x| !std::ptr::eq(x.as_ptr(), poistettava.as_ptr()));
+            // Poistaa kappaleen pelihahmosta
+            if let Some(hahmo) = &mut self.pelihahmo {
+                if std::ptr::eq(hahmo.anna_kappale().as_ptr(), poistettava.as_ptr()){
+                    self.pelihahmo = None
+                }
+            }
         }
     }
 }
 
+/// Tulee toteuttaa, jos laajentaa peruskappaleen toiminnallisuutta esim. pirrettäessä
+/// Tarvitaan esim. kun kappale poistetaan, jolloin myös kappaleeseen liitetyt lisäosat
+/// poistetaan.
 pub trait Lisaosa {
     /// Antaa lisäosan käyttämän kappaleen
     fn anna_kappale(&self) -> &RcKappale;
@@ -249,6 +271,7 @@ pub enum Muoto {
     Ympyra(f32),
 }
 
+/// Kertoo minkälainen kappale on kyseessä.
 #[derive(PartialEq, Copy, Clone)]
 pub enum Tagi {
     Vihollinen,
@@ -263,6 +286,7 @@ pub struct Kappale {
     pub muoto: Muoto,
     /// Kappaleen sijainti
     pub sijainti: Vektori<f32>,
+    /// Minkälainen kappale on kyseessä
     pub tagi: Tagi,
 }
 
