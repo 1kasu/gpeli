@@ -6,6 +6,8 @@ use std::time::Duration;
 
 use crate::fysiikka::Fysiikka;
 use crate::fysiikka::Fysiikkakappale;
+use crate::fysiikka::Tormaystiedot;
+use crate::fysiikka::Tormaystieto;
 use crate::maailma::Tagi::*;
 use crate::maailma::*;
 use crate::piirtaja::PiirrettavaKappale;
@@ -242,24 +244,51 @@ impl Paivitys for Peruspaivitys {
         let mut fysiikka = Fysiikka::new();
         fysiikka.laske_uudet_sijainnit(maailma.fysiikalliset(), paivitysaika);
 
-        //let mut poistettavat = Vec::new();
-        for tormays in fysiikka.tormaykset.anna_tormaykset() {
-            if maailma.fysiikalliset()[tormays.indeksi].anna_tagi() == Ammus {
-                let f_kappale = &maailma.fysiikalliset()[tormays.indeksi];
-                //println!("Yritetään poistaa ammus");
-                let kopio = Rc::clone(f_kappale.anna_kappale());
-                
-                if let Some(piirto) = maailma.anna_piirrettavyys(&kopio){
-                    if let PiirrettavaKappale::YksivarinenKappale{ref mut vari, ..} = piirto{
-                        *vari = Color::RGB(198, 99, 137);
-                    }
-                    
+        TormaystenKasittely::kasittele_tormaykset(fysiikka.tormaykset, maailma)
+    }
+}
+
+pub struct TormaystenKasittely;
+
+impl TormaystenKasittely {
+    fn kasittele_tormaykset(tormaykset: Tormaystiedot, maailma: &mut Perusmaailma) {
+        let mut mahdolliset_tapahtumat = Vec::new();
+        mahdolliset_tapahtumat.push(AmmustenTormays);
+        for tormays in tormaykset.anna_tormaykset() {
+            for toiminta in &mahdolliset_tapahtumat {
+                if toiminta.ehto(maailma.fysiikalliset()[tormays.indeksi].anna_tagi()) {
+                    toiminta.toiminta(tormays, maailma);
                 }
-                
-                //maailma.lisaa_poistettava(kopio);
+            }
+        }
+    }
+}
+
+trait Tormaystoiminta {
+    /// Tapahtuuko toiminto
+    fn ehto(&self, tagi: Tagi) -> bool;
+    /// Toiminta, joka tehdään ehdon toteutuessa
+    fn toiminta(&self, tormays: &Tormaystieto, maailma: &mut Perusmaailma);
+}
+
+struct AmmustenTormays;
+
+impl Tormaystoiminta for AmmustenTormays {
+    fn ehto(&self, tagi: Tagi) -> bool {
+        tagi == Ammus
+    }
+
+    fn toiminta(&self, tormays: &Tormaystieto, maailma: &mut Perusmaailma) {
+        let f_kappale = &maailma.fysiikalliset()[tormays.indeksi];
+        //println!("Yritetään poistaa ammus");
+        let kopio = Rc::clone(f_kappale.anna_kappale());
+
+        if let Some(piirto) = maailma.anna_piirrettavyys(&kopio) {
+            if let PiirrettavaKappale::YksivarinenKappale { ref mut vari, .. } = piirto {
+                *vari = Color::RGB(239, 40, 117);
             }
         }
 
-        maailma.poista_poistettavat();
+        //maailma.lisaa_poistettava(kopio);
     }
 }

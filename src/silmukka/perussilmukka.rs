@@ -102,6 +102,8 @@ impl<'a> Paasilmukka for Perussilmukka<'a> {
             self.paivitys
                 .paivita(&mut maailma, &mut self.syotteet, &paivitysaika);
 
+            maailma.poista_poistettavat();
+            
             self.piirtaja.piirra_maailma(&maailma)?;
         }
 
