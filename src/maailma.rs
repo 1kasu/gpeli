@@ -1,5 +1,5 @@
 use std::cell::RefCell;
-use std::ops::{Add, Mul, Sub};
+use std::ops::{Add, Div, Mul, Sub};
 use std::rc::Rc;
 
 use crate::fysiikka::Fysiikkakappale;
@@ -47,11 +47,32 @@ pub struct Perusmaailma {
 pub struct Pelihahmo {
     /// Pelihahmon käyttämä kappale
     kappale: RcKappale,
+    /// Pelihahmon viimeisin suunta esim. minne katsoo, ampuu jne
+    suunta: Vektori<f32>,
 }
 
 impl Pelihahmo {
+    // Lisää annetun kappaleen pelihahmoksi.
     pub fn new(kappale: RcKappale) -> Self {
-        Pelihahmo { kappale: kappale }
+        Pelihahmo {
+            kappale: kappale,
+            suunta: Vektori::new(1.0, 0.0).yksikkovektori(),
+        }
+    }
+
+    /// Antaa pelihahmon suunnan
+    pub fn anna_suunta(&self) -> Vektori<f32> {
+        self.suunta
+    }
+
+    /// Asettaa uuden suunnan pelihahmolle
+    /// # Arguments
+    /// * `suunta` - Pelihahmon uusi suunta.
+    pub fn aseta_suunta(&mut self, suunta: Vektori<f32>) {
+        let yksikkovektori = suunta.yksikkovektori();
+        if yksikkovektori.x.is_finite() && yksikkovektori.y.is_finite() {
+            self.suunta = yksikkovektori;
+        }
     }
 }
 
@@ -269,6 +290,19 @@ where
     }
 }
 
+impl<T> Div<T> for Vektori<T>
+where
+    T: Div<Output = T> + Copy,
+{
+    type Output = Vektori<T>;
+    fn div(self, other: T) -> Self::Output {
+        Vektori {
+            x: self.x / other,
+            y: self.y / other,
+        }
+    }
+}
+
 impl<T: Add<Output = T>> Add for Vektori<T> {
     type Output = Vektori<T>;
     fn add(self, other: Self::Output) -> Self::Output {
@@ -295,6 +329,11 @@ impl Vektori<f32> {
     pub fn pituus(self) -> f32 {
         // Näyttää kaamealta...
         (f32::powf(self.x, 2.0) + f32::powf(self.y, 2.0)).sqrt()
+    }
+
+    /// Antaa annetun vektorin yksikkövektorin
+    pub fn yksikkovektori(self) -> Self {
+        self / self.pituus()
     }
 }
 

@@ -22,6 +22,8 @@ const YLOS_LIIKKUMINEN: Scancode = Scancode::Up;
 const AMPUMINEN: Scancode = Scancode::Space;
 const PELIHAHMON_NOPEUS: f32 = 120.0;
 const AMMUKSEN_NOPEUS: f32 = 260.0;
+const AMMUKSEN_LEVEYS: f32 = 5.0;
+const AMMUKSEN_KORKEUS: f32 = 5.0;
 
 /// Selkeyttää koodia, kun arvataan, että vektorilla tarkoitetaan luotavan kappaleen nopeutta ja suuntaa.
 type Nopeus = Vektori;
@@ -104,27 +106,46 @@ impl Paivitys for PelihahmonPaivitys {
             }
 
             let hahmon_kappale = pelihahmo.anna_kappale();
+            let pelaajan_nopeus = Nopeus::new(x, y);
 
             if let Some(hahmon_fysiikka) = maailma.anna_fysiikka(&hahmon_kappale) {
-                hahmon_fysiikka.aseta_nopeus(Vektori::new(x, y));
+                hahmon_fysiikka.aseta_nopeus(pelaajan_nopeus);
             }
+
+            let pelihahmo = maailma.anna_pelihahmo_mut().unwrap();
+            // Päivitetään suunta
+            pelihahmo.aseta_suunta(pelaajan_nopeus);
 
             let hahmon_sijainti = hahmon_kappale.borrow().sijainti;
 
             // Pelihahmon ampuminen
             if syotteet.nappain_painettu(AMPUMINEN) {
+                // Lasketaan lisättävän ammuksen sijainti
+                let (pelaajan_leveys_puolikas, pelaajan_korkeus_puolikas) =
+                    match hahmon_kappale.borrow().muoto {
+                        Muoto::Nelio(leveys, korkeus) => (leveys / 2.0, korkeus / 2.0),
+                        Muoto::Ympyra(sade) => (sade, sade),
+                    };
+                let pelaajan_keskipiste = hahmon_sijainti
+                    + Vektori::new(pelaajan_leveys_puolikas, pelaajan_korkeus_puolikas);
+                let ammuksen_keskipiste = Vektori::new(AMMUKSEN_LEVEYS, AMMUKSEN_KORKEUS / 2.0);
+                let ammuksen_suunta = pelihahmo.anna_suunta();
+                let muutos = ammuksen_suunta * 2.0 * pelaajan_leveys_puolikas - ammuksen_keskipiste;
+
+                // Lisätään ammus pelaajan katsomissuuntaan vähän matkan päähän
                 let r_kappale = lisaa_kappale(
                     maailma,
-                    Kappale::new(
-                        Muoto::Nelio(5.0, 5.0),
-                        hahmon_sijainti.x + 22.5,
-                        hahmon_sijainti.y + 10.0,
-                        Ammus,
-                    ),
+                    Kappale {
+                        muoto: Muoto::Nelio(AMMUKSEN_LEVEYS, AMMUKSEN_KORKEUS),
+                        sijainti: pelaajan_keskipiste + muutos,
+                        tagi: Ammus,
+                    },
                     Color::RGB(0, 255, 255),
                 );
+
+                // Lisätään ammukselle fysiikka ja ammuksen alkunopeus
                 maailma.lisaa_fysiikkakappale(Fysiikkakappale::new(
-                    Nopeus::new(AMMUKSEN_NOPEUS, 0.0),
+                    ammuksen_suunta * AMMUKSEN_NOPEUS,
                     r_kappale,
                 ));
             }

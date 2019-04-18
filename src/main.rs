@@ -1,6 +1,8 @@
 extern crate sdl2;
 
 use sdl2::pixels::Color;
+use sdl2::render::Canvas;
+use sdl2::render::BlendMode;
 
 pub mod maailma;
 pub mod paivitys;
@@ -29,6 +31,9 @@ fn main() -> Result<(), String> {
         .present_vsync()
         .build()
         .map_err(|e| e.to_string())?;
+    
+    // Sallii aplha värin.
+    canvas.set_blend_mode(BlendMode::Blend);
 
     canvas.set_draw_color(Color::RGBA(0, 0, 0, 255));
 
