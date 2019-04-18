@@ -66,8 +66,8 @@ impl Fysiikkakappale {
 
 impl Lisaosa for Fysiikkakappale {
     /// Antaa fysiikkakappaleen käyttämän kappaleen
-    fn anna_kappale(&self) -> &RcKappale {
-        &self.kappale
+    fn anna_kappale(&self) -> RcKappale {
+        Rc::clone(&self.kappale)
     }
 }
 

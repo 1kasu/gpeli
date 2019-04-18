@@ -43,9 +43,9 @@ pub enum PiirrettavaKappale {
 }
 
 impl Lisaosa for PiirrettavaKappale {
-    fn anna_kappale(&self) -> &RcKappale {
+    fn anna_kappale(&self) -> RcKappale {
         match self {
-            PiirrettavaKappale::YksivarinenKappale { kappale, .. } => kappale,
+            PiirrettavaKappale::YksivarinenKappale { kappale, .. } => Rc::clone(kappale),
         }
     }
 }

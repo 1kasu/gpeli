@@ -4,6 +4,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use std::time::Duration;
 
+use crate::fysiikka::Fysiikallinen;
 use crate::fysiikka::Fysiikka;
 use crate::fysiikka::Fysiikkakappale;
 use crate::fysiikka::Tormaystiedot;
@@ -12,6 +13,15 @@ use crate::maailma::Tagi::*;
 use crate::maailma::*;
 use crate::piirtaja::PiirrettavaKappale;
 use crate::syotteet::*;
+
+// Vakioita eri asioille
+const OIKEALLE_LIIKKUMINEN: Scancode = Scancode::Right;
+const VASEMMALLE_LIIKKUMINEN: Scancode = Scancode::Left;
+const ALAS_LIIKKUMINEN: Scancode = Scancode::Down;
+const YLOS_LIIKKUMINEN: Scancode = Scancode::Up;
+const AMPUMINEN: Scancode = Scancode::Space;
+const PELIHAHMON_NOPEUS: f32 = 120.0;
+const AMMUKSEN_NOPEUS: f32 = 260.0;
 
 /// Selkeyttää koodia, kun arvataan, että vektorilla tarkoitetaan luotavan kappaleen nopeutta ja suuntaa.
 type Nopeus = Vektori;
@@ -44,11 +54,6 @@ pub struct Peruspaivitys {
 }
 
 struct PelihahmonPaivitys;
-const OIKEALLE_LIIKKUMINEN: Scancode = Scancode::Right;
-const VASEMMALLE_LIIKKUMINEN: Scancode = Scancode::Left;
-const ALAS_LIIKKUMINEN: Scancode = Scancode::Down;
-const YLOS_LIIKKUMINEN: Scancode = Scancode::Up;
-const AMPUMINEN: Scancode = Scancode::Space;
 
 impl Paivitys for PelihahmonPaivitys {
     /// Alustaa pelin
@@ -78,36 +83,33 @@ impl Paivitys for PelihahmonPaivitys {
         &self,
         maailma: &mut Perusmaailma,
         syotteet: &mut Syotteet,
-        paivitysaika: &Duration,
+        _paivitysaika: &Duration,
     ) {
-        if maailma.onko_pelihahmo() {
+        if let Some(pelihahmo) = maailma.anna_pelihahmo_mut() {
             let mut x = 0.0;
             let mut y = 0.0;
 
             // Liikutetaan pelihahmoa
-            let liike = paivitysaika.as_micros() as f32 * 0.0002;
             if syotteet.nappain_pohjassa(OIKEALLE_LIIKKUMINEN) {
-                x += liike;
+                x += PELIHAHMON_NOPEUS;
             }
             if syotteet.nappain_pohjassa(VASEMMALLE_LIIKKUMINEN) {
-                x -= liike;
+                x -= PELIHAHMON_NOPEUS;
             }
             if syotteet.nappain_pohjassa(YLOS_LIIKKUMINEN) {
-                y -= liike;
+                y -= PELIHAHMON_NOPEUS;
             }
             if syotteet.nappain_pohjassa(ALAS_LIIKKUMINEN) {
-                y += liike;
+                y += PELIHAHMON_NOPEUS;
             }
 
-            maailma
-                .anna_pelihahmo_mut()
-                .unwrap()
-                .kappale
-                .borrow_mut()
-                .sijainti
-                .liiku(x, y);
+            let hahmon_kappale = pelihahmo.anna_kappale();
 
-            let hahmon_sijainti = maailma.anna_pelihahmo().unwrap().kappale.borrow().sijainti;
+            if let Some(hahmon_fysiikka) = maailma.anna_fysiikka(&hahmon_kappale) {
+                hahmon_fysiikka.aseta_nopeus(Vektori::new(x, y));
+            }
+
+            let hahmon_sijainti = hahmon_kappale.borrow().sijainti;
 
             // Pelihahmon ampuminen
             if syotteet.nappain_painettu(AMPUMINEN) {
@@ -121,8 +123,10 @@ impl Paivitys for PelihahmonPaivitys {
                     ),
                     Color::RGB(0, 255, 255),
                 );
-                maailma
-                    .lisaa_fysiikkakappale(Fysiikkakappale::new(Nopeus::new(80.0, 0.0), r_kappale));
+                maailma.lisaa_fysiikkakappale(Fysiikkakappale::new(
+                    Nopeus::new(AMMUKSEN_NOPEUS, 0.0),
+                    r_kappale,
+                ));
             }
         }
     }
@@ -200,6 +204,7 @@ impl Paivitys for Peruspaivitys {
             Color::RGB(255, 30, 30),
         );
         maailma.lisaa_pelihahmo(Pelihahmo::new(Rc::clone(&_rk)));
+        maailma.lisaa_fysiikkakappale(Fysiikkakappale::new(Default::default(), _rk));
 
         // Seinät
         let esteiden_vari = Color::RGB(20, 20, 200);
@@ -281,7 +286,7 @@ impl Tormaystoiminta for AmmustenTormays {
     fn toiminta(&self, tormays: &Tormaystieto, maailma: &mut Perusmaailma) {
         let f_kappale = &maailma.fysiikalliset()[tormays.indeksi];
         //println!("Yritetään poistaa ammus");
-        let kopio = Rc::clone(f_kappale.anna_kappale());
+        let kopio = f_kappale.anna_kappale();
 
         if let Some(piirto) = maailma.anna_piirrettavyys(&kopio) {
             if let PiirrettavaKappale::YksivarinenKappale { ref mut vari, .. } = piirto {

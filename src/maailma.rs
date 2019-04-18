@@ -8,7 +8,14 @@ use crate::piirtaja::PiirrettavaKappale;
 type RcKappale = Rc<RefCell<Kappale>>;
 
 pub trait LisaosienAntaja {
+    /// Antaa annettuun kappaleeseen liitetyt piirto-ominaisuudet, jos niitä on
+    /// # Arguments
+    /// * `kappale` - Kappale, jonka piirto-ominaisuutta pyydetään
     fn anna_piirrettavyys(&mut self, kappale: &RcKappale) -> Option<&mut PiirrettavaKappale>;
+    /// Antaa annettuun kappaleeseen liitetyt fysiikka-ominaisuudet, jos niitä on
+    /// # Arguments
+    /// * `kappale` - Kappale, jonka fysiikka-ominaisuutta pyydetään
+    fn anna_fysiikka(&mut self, kappale: &RcKappale) -> Option<&mut Fysiikkakappale>;
 }
 
 pub trait PiirrettavaMaailma {
@@ -39,7 +46,7 @@ pub struct Perusmaailma {
 /// Pelissä oleva pelaajan ohjaama hahmo. Esimerkiksi kamera seuraa automaattisesti tätä.
 pub struct Pelihahmo {
     /// Pelihahmon käyttämä kappale
-    pub kappale: RcKappale,
+    kappale: RcKappale,
 }
 
 impl Pelihahmo {
@@ -49,8 +56,8 @@ impl Pelihahmo {
 }
 
 impl Lisaosa for Pelihahmo {
-    fn anna_kappale(&self) -> &RcKappale {
-        &self.kappale
+    fn anna_kappale(&self) -> RcKappale {
+        Rc::clone(&self.kappale)
     }
 }
 
@@ -152,10 +159,25 @@ impl Perusmaailma {
 }
 
 impl LisaosienAntaja for Perusmaailma {
+    /// Antaa annettuun kappaleeseen liitetyt piirto-ominaisuudet, jos niitä on
+    /// # Arguments
+    /// * `kappale` - Kappale, jonka piirto-ominaisuutta pyydetään
     fn anna_piirrettavyys(&mut self, kappale: &RcKappale) -> Option<&mut PiirrettavaKappale> {
         for piirrettava in &mut self.piirrettavat_kappaleet {
             if std::ptr::eq(piirrettava.anna_kappale().as_ptr(), kappale.as_ptr()) {
                 return Some(piirrettava);
+            }
+        }
+        None
+    }
+
+    /// Antaa annettuun kappaleeseen liitetyt fysiikka-ominaisuudet, jos niitä on
+    /// # Arguments
+    /// * `kappale` - Kappale, jonka fysiikka-ominaisuutta pyydetään
+    fn anna_fysiikka(&mut self, kappale: &RcKappale) -> Option<&mut Fysiikkakappale> {
+        for fysiikka in &mut self.fysiikka_kappaleet {
+            if std::ptr::eq(fysiikka.anna_kappale().as_ptr(), kappale.as_ptr()) {
+                return Some(fysiikka);
             }
         }
         None
@@ -166,8 +188,8 @@ impl LisaosienAntaja for Perusmaailma {
 /// Tarvitaan esim. kun kappale poistetaan, jolloin myös kappaleeseen liitetyt lisäosat
 /// poistetaan.
 pub trait Lisaosa {
-    /// Antaa lisäosan käyttämän kappaleen
-    fn anna_kappale(&self) -> &RcKappale;
+    /// Antaa lisäosan käyttämään kappaleeseen kopiodun viitteen
+    fn anna_kappale(&self) -> RcKappale;
 }
 
 impl PiirrettavaMaailma for Perusmaailma {
