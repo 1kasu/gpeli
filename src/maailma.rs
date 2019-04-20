@@ -353,6 +353,7 @@ pub enum Tagi {
     Seina,
     Ammus,
     Pelaaja,
+    Partikkeli
 }
 
 /// Kappale, jolla on muoto ja sijainti

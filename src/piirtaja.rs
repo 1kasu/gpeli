@@ -86,7 +86,14 @@ impl Piirrettava for Kappale {
                     (korkeus * kameran_zoomaus) as u32,
                 )))?;
             }
-            Muoto::Ympyra(_) => (),
+            Muoto::Ympyra(sade) => {
+                canvas.fill_rect(Some(Rect::new(
+                    (self.sijainti.x * kameran_zoomaus + kameran_aiheuttama_muutos.x - sade) as i32,
+                    (self.sijainti.y * kameran_zoomaus + kameran_aiheuttama_muutos.y - sade) as i32,
+                    (sade * 2.0 * kameran_zoomaus) as u32,
+                    (sade * 2.0 * kameran_zoomaus) as u32,
+                )))?;
+            },
         }
 
         Ok(())

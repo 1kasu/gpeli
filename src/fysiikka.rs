@@ -268,8 +268,47 @@ fn ovatko_paallekkain(kappale_a: &Kappale, kappale_b: &Kappale) -> bool {
         (Muoto::Ympyra(sade_a), Muoto::Ympyra(sade_b)) => {
             (kappale_a.sijainti - kappale_b.sijainti).pituus() < (sade_a + sade_b)
         }
-        // TODO: Määrittele törmäykset ympyrän ja neliö välille
-        (Muoto::Ympyra(_sade), Muoto::Nelio(_leveys, _korkeus)) => false,
-        (Muoto::Nelio(_leveys, _korkeus), Muoto::Ympyra(_sade)) => false,
+        (Muoto::Ympyra(sade), Muoto::Nelio(leveys, korkeus)) => {
+            let ympyra_sijainti = kappale_a.sijainti;
+            let nelio_sijainti = kappale_b.sijainti;
+            let vasen = nelio_sijainti.x;
+            let oikea = nelio_sijainti.x + leveys;
+            let ala = nelio_sijainti.y;
+            let yla = nelio_sijainti.y + korkeus;
+            let vasen_yla_kulma = Vektori::new(vasen, yla);
+            let oikea_yla_kulma = Vektori::new(oikea, yla);
+            let vasen_ala_kulma = Vektori::new(vasen, ala);
+            let oikea_ala_kulma = Vektori::new(oikea, ala);
+
+            !(ympyra_sijainti.x <= vasen - sade
+                || oikea + sade <= ympyra_sijainti.x
+                || ympyra_sijainti.y <= ala - sade
+                || yla + sade <= ympyra_sijainti.y
+                || (ympyra_sijainti - vasen_yla_kulma).pituus() <= sade
+                || (ympyra_sijainti - oikea_yla_kulma).pituus() <= sade
+                || (ympyra_sijainti - vasen_ala_kulma).pituus() <= sade
+                || (ympyra_sijainti - oikea_ala_kulma).pituus() <= sade)
+        }
+        (Muoto::Nelio(leveys, korkeus), Muoto::Ympyra(sade)) => {
+            let ympyra_sijainti = kappale_b.sijainti;
+            let nelio_sijainti = kappale_a.sijainti;
+            let vasen = nelio_sijainti.x;
+            let oikea = nelio_sijainti.x + leveys;
+            let ala = nelio_sijainti.y;
+            let yla = nelio_sijainti.y + korkeus;
+            let vasen_yla_kulma = Vektori::new(vasen, yla);
+            let oikea_yla_kulma = Vektori::new(oikea, yla);
+            let vasen_ala_kulma = Vektori::new(vasen, ala);
+            let oikea_ala_kulma = Vektori::new(oikea, ala);
+
+            !(ympyra_sijainti.x < vasen - sade
+                || oikea + sade < ympyra_sijainti.x
+                || ympyra_sijainti.y < ala - sade
+                || yla + sade < ympyra_sijainti.y
+                || (ympyra_sijainti - vasen_yla_kulma).pituus() <= sade
+                || (ympyra_sijainti - oikea_yla_kulma).pituus() <= sade
+                || (ympyra_sijainti - vasen_ala_kulma).pituus() <= sade
+                || (ympyra_sijainti - oikea_ala_kulma).pituus() <= sade)
+        }
     }
 }
