@@ -128,7 +128,7 @@ impl Paivitys for PelihahmonPaivitys {
                 let ammuksen_sijainti = pelaajan_keskipiste + ammuksen_suunta * muutos_kerroin;
 
                 // Lisätään ammus pelaajan katsomissuuntaan vähän matkan päähän
-                let r_kappale = lisaa_kappale(
+                let r_kappale = lisaa_kuvallinen_kappale(
                     maailma,
                     Kappale::new_keskipisteella(
                         ammuksen_muoto,
@@ -136,7 +136,7 @@ impl Paivitys for PelihahmonPaivitys {
                         ammuksen_sijainti.y,
                         Ammus,
                     ),
-                    Color::RGB(0, 255, 255),
+                    "ammus".to_string(),
                 );
 
                 // Lisätään ammukselle fysiikka ja ammuksen alkunopeus
@@ -175,9 +175,27 @@ fn lisaa_kappale(
     vari: Color,
 ) -> Rc<RefCell<Kappale>> {
     let r_kappale = maailma.lisaa_kappale(kappale);
-    maailma.lisaa_piirrettava_kappale(PiirrettavaKappale::YksivarinenKappale {
+    maailma.lisaa_piirrettava_kappale(PiirrettavaKappale::Yksivarinen {
         kappale: Rc::clone(&r_kappale),
         vari: vari,
+    });
+    r_kappale
+}
+
+/// Lisää kappaleen maailmaan, luoden sille piirrettävän lisäosan
+/// # Arguments
+/// * `maailma` - Pelimaailma, johon kappale lisätään
+/// * `kappale` - Lisättävä kappale
+/// * `vari` - Lisättävän kappaleen väri
+fn lisaa_kuvallinen_kappale(
+    maailma: &mut Perusmaailma,
+    kappale: Kappale,
+    kuva: String,
+) -> Rc<RefCell<Kappale>> {
+    let r_kappale = maailma.lisaa_kappale(kappale);
+    maailma.lisaa_piirrettava_kappale(PiirrettavaKappale::Kuvallinen {
+        kappale: Rc::clone(&r_kappale),
+        kuvan_nimi: kuva,
     });
     r_kappale
 }
@@ -193,7 +211,7 @@ fn lisaa_fysiikka_kappale(
     vari: Color,
 ) -> Rc<RefCell<Kappale>> {
     let r_kappale = maailma.lisaa_kappale(kappale);
-    maailma.lisaa_piirrettava_kappale(PiirrettavaKappale::YksivarinenKappale {
+    maailma.lisaa_piirrettava_kappale(PiirrettavaKappale::Yksivarinen {
         kappale: Rc::clone(&r_kappale),
         vari: vari,
     });
@@ -312,7 +330,7 @@ impl Tormaystoiminta for AmmustenTormays {
         let kopio = f_kappale.anna_kappale();
 
         if let Some(piirto) = maailma.anna_piirrettavyys(&kopio) {
-            if let PiirrettavaKappale::YksivarinenKappale { ref mut vari, .. } = piirto {
+            if let PiirrettavaKappale::Yksivarinen { ref mut vari, .. } = piirto {
                 *vari = Color::RGB(239, 40, 117);
             }
         }

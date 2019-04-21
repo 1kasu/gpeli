@@ -1,11 +1,12 @@
 //! Pelimaailman esittämisestä vastaava komponentti.
 //! Peli voidaan esittää esimerkiksi piirtämällä näytölle kuva tai
 //! lähettämällä pelimaailman tila verkon yli asiakkaalle.
-use sdl2::image::LoadTexture;
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
 use sdl2::render::Canvas;
+use sdl2::render::Texture;
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::rc::Rc;
 
 use crate::maailma::Kappale;
@@ -40,13 +41,18 @@ type RcKappale = Rc<RefCell<Kappale>>;
 /// Piirrettävä  kappale
 pub enum PiirrettavaKappale {
     /// Yksivärinen kappale, jolla on väri ja kappale (jolla on muoto, koko, sijainti...)
-    YksivarinenKappale { kappale: RcKappale, vari: Color },
+    Yksivarinen { kappale: RcKappale, vari: Color },
+    Kuvallinen {
+        kappale: RcKappale,
+        kuvan_nimi: String,
+    },
 }
 
 impl Lisaosa for PiirrettavaKappale {
     fn anna_kappale(&self) -> RcKappale {
         match self {
-            PiirrettavaKappale::YksivarinenKappale { kappale, .. } => Rc::clone(kappale),
+            PiirrettavaKappale::Yksivarinen { kappale, .. } => Rc::clone(kappale),
+            PiirrettavaKappale::Kuvallinen { kappale, .. } => Rc::clone(kappale),
         }
     }
 }
@@ -63,10 +69,11 @@ pub trait Piirrettava {
         canvas: &mut Canvas<sdl2::video::Window>,
         kameran_aiheuttama_muutos: Vektori,
         kameran_zoomaus: f32,
+        tekstuurit: &HashMap<String, Texture>,
     ) -> Result<(), String>;
 }
 
-impl Piirrettava for Kappale {
+impl Kappale {
     /// Piirtää kappaleen canvakselle käyttämällä tarvittavia kameran muunnoksia
     /// # Arguments
     /// * `canvas` - Canvas, jolle piirretään
@@ -78,8 +85,6 @@ impl Piirrettava for Kappale {
         kameran_aiheuttama_muutos: Vektori,
         kameran_zoomaus: f32,
     ) -> Result<(), String> {
-        let texture_creator = canvas.texture_creator();
-        let texture = texture_creator.load_texture("ympyra.png")?;
         let sijainti = self.kulman_sijainti() * kameran_zoomaus + kameran_aiheuttama_muutos;
         match self.muoto {
             Muoto::Nelio(leveys, korkeus) => {
@@ -91,8 +96,42 @@ impl Piirrettava for Kappale {
                 )))?;
             }
             Muoto::Ympyra(sade) => {
+                canvas.fill_rect(Some(Rect::new(
+                    sijainti.x as i32,
+                    sijainti.y as i32,
+                    (sade * 2.0 * kameran_zoomaus) as u32,
+                    (sade * 2.0 * kameran_zoomaus) as u32,
+                )))?;
+            }
+        }
+
+        Ok(())
+    }
+
+    fn piirra_kuvalla(
+        &self,
+        canvas: &mut Canvas<sdl2::video::Window>,
+        kameran_aiheuttama_muutos: Vektori,
+        kameran_zoomaus: f32,
+        tekstuuri: &Texture,
+    ) -> Result<(), String> {
+        let sijainti = self.kulman_sijainti() * kameran_zoomaus + kameran_aiheuttama_muutos;
+        match self.muoto {
+            Muoto::Nelio(leveys, korkeus) => {
                 canvas.copy(
-                    &texture,
+                    tekstuuri,
+                    None,
+                    Some(Rect::new(
+                        sijainti.x as i32,
+                        sijainti.y as i32,
+                        (leveys * kameran_zoomaus) as u32,
+                        (korkeus * kameran_zoomaus) as u32,
+                    )),
+                )?;
+            }
+            Muoto::Ympyra(sade) => {
+                canvas.copy(
+                    tekstuuri,
                     None,
                     Some(Rect::new(
                         sijainti.x as i32,
@@ -119,26 +158,48 @@ impl Piirrettava for PiirrettavaKappale {
         canvas: &mut Canvas<sdl2::video::Window>,
         kameran_aiheuttama_muutos: Vektori,
         kameran_zoomaus: f32,
+        tekstuurit: &HashMap<String, Texture>,
     ) -> Result<(), String> {
         match &self {
-            PiirrettavaKappale::YksivarinenKappale {
+            PiirrettavaKappale::Yksivarinen {
                 kappale: k,
                 vari: v,
             } => {
                 canvas.set_draw_color(v.rgba());
                 k.borrow()
-                    .piirra(canvas, kameran_aiheuttama_muutos, kameran_zoomaus)
+                    .piirra(canvas, kameran_aiheuttama_muutos, kameran_zoomaus)?;
+            }
+            PiirrettavaKappale::Kuvallinen {
+                kappale: k,
+                kuvan_nimi: kuva,
+            } => {
+                if let Some(kuva) = tekstuurit.get(kuva) {
+                    k.borrow().piirra_kuvalla(
+                        canvas,
+                        kameran_aiheuttama_muutos,
+                        kameran_zoomaus,
+                        kuva,
+                    )?;
+                } else {
+                    // Kuva ei löydy, joten piirretään punaisella päälle
+                    canvas.set_draw_color(Color::RGB(255, 0, 0));
+                    k.borrow()
+                        .piirra(canvas, kameran_aiheuttama_muutos, kameran_zoomaus)?;
+                }
             }
         }
+        Ok(())
     }
 }
 
 /// Peruspiirtäjä, joka piirtää pelin tilan näytölle
-pub struct Peruspiirtaja {
+pub struct Peruspiirtaja<'a> {
     /// Canvas, jolle pelin tila piirretään
     canvas: Canvas<sdl2::video::Window>,
     /// Kamera, jonka näkökulmasta pelimaailma esitetään
     kamera: Kamera,
+
+    tekstuurit: HashMap<String, Texture<'a>>,
 }
 
 /// Kamera, joka rajaa mikä alue esitetään pelimaailmasta.
@@ -165,7 +226,7 @@ impl Kamera {
     }
 }
 
-impl Peruspiirtaja {
+impl<'a> Peruspiirtaja<'a> {
     /// Luo uuden peruspiirtäjän
     /// # Arguments
     /// * `canvas` - Canvas, jolle kuva piirretään
@@ -173,6 +234,7 @@ impl Peruspiirtaja {
         Ok(Peruspiirtaja {
             kamera: Kamera::new(Peruspiirtaja::canvaksen_keskipiste(&canvas)?, 1.0),
             canvas: canvas,
+            tekstuurit: HashMap::new(),
         })
     }
 
@@ -195,9 +257,14 @@ impl Peruspiirtaja {
     fn keskipiste(&self) -> Result<Vektori, String> {
         Peruspiirtaja::canvaksen_keskipiste(&self.canvas)
     }
+
+    /// Lisää annetun tekstuurin käytettäväksi
+    pub fn lisaa_tekstuuri(&mut self, tekstuuri: Texture<'a>, nimi: String) {
+        self.tekstuurit.insert(nimi, tekstuuri);
+    }
 }
 
-impl Piirtaja for Peruspiirtaja {
+impl<'a> Piirtaja for Peruspiirtaja<'a> {
     /// Piirtää kuvan pelimaailman tilasta.
     /// # Arguments
     /// * `maailma` - Pelimaailma, jonka pohjalta kuva piirretään
@@ -214,7 +281,12 @@ impl Piirtaja for Peruspiirtaja {
         self.canvas.set_draw_color(Color::RGB(200, 100, 10));
 
         for piirrettava in maailma.piirrettavat(muutos) {
-            piirrettava.piirra(&mut self.canvas, muutos, self.kamera.zoomin_kerroin)?;
+            piirrettava.piirra(
+                &mut self.canvas,
+                muutos,
+                self.kamera.zoomin_kerroin,
+                &self.tekstuurit,
+            )?;
         }
         self.canvas.present();
 

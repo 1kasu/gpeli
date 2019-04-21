@@ -1,6 +1,6 @@
 extern crate sdl2;
 
-use sdl2::image::InitFlag;
+use sdl2::image::{InitFlag, LoadTexture};
 use sdl2::pixels::Color;
 use sdl2::render::BlendMode;
 
@@ -38,6 +38,7 @@ fn main() -> Result<(), String> {
 
     canvas.set_draw_color(Color::RGBA(0, 0, 0, 255));
 
+    let texture_creator = canvas.texture_creator();
     let events = sdl_context.event_pump()?;
     let mut piirtaja = Peruspiirtaja::new(canvas)?;
     let paivitys = Peruspaivitys::new();
@@ -47,8 +48,13 @@ fn main() -> Result<(), String> {
     println!("Seuraus on {0} ja {1}", seuraus.0, seuraus.1);
     println!("Zoomi on {}", zoomi);
 
+    // Asetetaan piirtäjän asetukset
     piirtaja.aseta_kameran_seurauksen_etaisyys(seuraus)?;
     piirtaja.aseta_kameran_zoomi(zoomi);
+
+    // Lisätään pelissä käytettävät kuvat
+    let texture = texture_creator.load_texture("ympyra.png")?;
+    piirtaja.lisaa_tekstuuri(texture, "ammus".to_string());
 
     let mut silmukka = Perussilmukka::new(events, sdl_context, &mut piirtaja, &paivitys);
     silmukka.kaynnista_silmukka()
