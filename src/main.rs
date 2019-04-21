@@ -1,15 +1,16 @@
 extern crate sdl2;
 
+use sdl2::image::{InitFlag, LoadTexture};
 use sdl2::pixels::Color;
-use sdl2::render::Canvas;
 use sdl2::render::BlendMode;
+use sdl2::render::Canvas;
 
+pub mod fysiikka;
 pub mod maailma;
 pub mod paivitys;
 pub mod piirtaja;
 pub mod silmukka;
 pub mod syotteet;
-pub mod fysiikka;
 use crate::paivitys::*;
 use crate::piirtaja::*;
 use crate::silmukka::perussilmukka::Perussilmukka;
@@ -18,6 +19,7 @@ use crate::silmukka::Paasilmukka;
 fn main() -> Result<(), String> {
     let sdl_context = sdl2::init()?;
     let video_subsystem = sdl_context.video()?;
+    let _image_context = sdl2::image::init(InitFlag::PNG)?;
 
     let window = video_subsystem
         .window("Peli", 1280, 720)
@@ -31,7 +33,7 @@ fn main() -> Result<(), String> {
         .present_vsync()
         .build()
         .map_err(|e| e.to_string())?;
-    
+
     // Sallii aplha värin.
     canvas.set_blend_mode(BlendMode::Blend);
 

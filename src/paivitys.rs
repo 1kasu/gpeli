@@ -22,7 +22,7 @@ const YLOS_LIIKKUMINEN: Scancode = Scancode::Up;
 const AMPUMINEN: Scancode = Scancode::Space;
 const PELIHAHMON_NOPEUS: f32 = 120.0;
 const AMMUKSEN_NOPEUS: f32 = 260.0;
-const AMMUKSEN_LEVEYS: f32 = 5.0;
+const AMMUKSEN_LEVEYS: f32 = 30.0;
 const AMMUKSEN_KORKEUS: f32 = 5.0;
 
 /// Selkeyttää koodia, kun arvataan, että vektorilla tarkoitetaan luotavan kappaleen nopeutta ja suuntaa.
@@ -136,7 +136,7 @@ impl Paivitys for PelihahmonPaivitys {
                 let r_kappale = lisaa_kappale(
                     maailma,
                     Kappale {
-                        muoto: Muoto::Nelio(AMMUKSEN_LEVEYS, AMMUKSEN_KORKEUS),
+                        muoto: Muoto::Ympyra(AMMUKSEN_LEVEYS),
                         sijainti: pelaajan_keskipiste + muutos,
                         tagi: Ammus,
                     },

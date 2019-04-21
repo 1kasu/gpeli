@@ -280,14 +280,26 @@ fn ovatko_paallekkain(kappale_a: &Kappale, kappale_b: &Kappale) -> bool {
             let vasen_ala_kulma = Vektori::new(vasen, ala);
             let oikea_ala_kulma = Vektori::new(oikea, ala);
 
-            !(ympyra_sijainti.x <= vasen - sade
+            !(
+                // Rajataan neliö, jonka ulkopuolella törmäys ei voi tapahtua
+                ympyra_sijainti.x <= vasen - sade
                 || oikea + sade <= ympyra_sijainti.x
                 || ympyra_sijainti.y <= ala - sade
                 || yla + sade <= ympyra_sijainti.y
-                || (ympyra_sijainti - vasen_yla_kulma).pituus() <= sade
-                || (ympyra_sijainti - oikea_yla_kulma).pituus() <= sade
-                || (ympyra_sijainti - vasen_ala_kulma).pituus() <= sade
-                || (ympyra_sijainti - oikea_ala_kulma).pituus() <= sade)
+                // Tarkistetaan, onko se, neliön kulman muodostaman ympyrän ulkopuolella
+                || (ympyra_sijainti - vasen_yla_kulma).pituus() >= sade
+                    && ympyra_sijainti.x < vasen
+                    && ympyra_sijainti.y > yla
+                || (ympyra_sijainti - oikea_yla_kulma).pituus() >= sade
+                    && ympyra_sijainti.x > oikea
+                    && ympyra_sijainti.y > yla
+                || (ympyra_sijainti - vasen_ala_kulma).pituus() >= sade
+                    && ympyra_sijainti.x < vasen
+                    && ympyra_sijainti.y < ala
+                || (ympyra_sijainti - oikea_ala_kulma).pituus() >= sade
+                    && ympyra_sijainti.x > oikea
+                    && ympyra_sijainti.y < ala
+            )
         }
         (Muoto::Nelio(leveys, korkeus), Muoto::Ympyra(sade)) => {
             let ympyra_sijainti = kappale_b.sijainti;
@@ -301,14 +313,22 @@ fn ovatko_paallekkain(kappale_a: &Kappale, kappale_b: &Kappale) -> bool {
             let vasen_ala_kulma = Vektori::new(vasen, ala);
             let oikea_ala_kulma = Vektori::new(oikea, ala);
 
-            !(ympyra_sijainti.x < vasen - sade
-                || oikea + sade < ympyra_sijainti.x
-                || ympyra_sijainti.y < ala - sade
-                || yla + sade < ympyra_sijainti.y
-                || (ympyra_sijainti - vasen_yla_kulma).pituus() <= sade
-                || (ympyra_sijainti - oikea_yla_kulma).pituus() <= sade
-                || (ympyra_sijainti - vasen_ala_kulma).pituus() <= sade
-                || (ympyra_sijainti - oikea_ala_kulma).pituus() <= sade)
+            !(ympyra_sijainti.x <= vasen - sade
+                || oikea + sade <= ympyra_sijainti.x
+                || ympyra_sijainti.y <= ala - sade
+                || yla + sade <= ympyra_sijainti.y
+                || (ympyra_sijainti - vasen_yla_kulma).pituus() >= sade
+                    && ympyra_sijainti.x < vasen
+                    && ympyra_sijainti.y > yla
+                || (ympyra_sijainti - oikea_yla_kulma).pituus() >= sade
+                    && ympyra_sijainti.x > oikea
+                    && ympyra_sijainti.y > yla
+                || (ympyra_sijainti - vasen_ala_kulma).pituus() >= sade
+                    && ympyra_sijainti.x < vasen
+                    && ympyra_sijainti.y < ala
+                || (ympyra_sijainti - oikea_ala_kulma).pituus() >= sade
+                    && ympyra_sijainti.x > oikea
+                    && ympyra_sijainti.y < ala)
         }
     }
 }

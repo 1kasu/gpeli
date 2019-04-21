@@ -1,6 +1,7 @@
 //! Pelimaailman esittämisestä vastaava komponentti.
 //! Peli voidaan esittää esimerkiksi piirtämällä näytölle kuva tai
 //! lähettämällä pelimaailman tila verkon yli asiakkaalle.
+use sdl2::image::LoadTexture;
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
 use sdl2::render::Canvas;
@@ -77,6 +78,8 @@ impl Piirrettava for Kappale {
         kameran_aiheuttama_muutos: Vektori,
         kameran_zoomaus: f32,
     ) -> Result<(), String> {
+        let texture_creator = canvas.texture_creator();
+        let texture = texture_creator.load_texture("ympyra.png")?;
         match self.muoto {
             Muoto::Nelio(leveys, korkeus) => {
                 canvas.fill_rect(Some(Rect::new(
@@ -87,13 +90,13 @@ impl Piirrettava for Kappale {
                 )))?;
             }
             Muoto::Ympyra(sade) => {
-                canvas.fill_rect(Some(Rect::new(
+                canvas.copy(&texture, None, Some(Rect::new(
                     (self.sijainti.x * kameran_zoomaus + kameran_aiheuttama_muutos.x - sade) as i32,
                     (self.sijainti.y * kameran_zoomaus + kameran_aiheuttama_muutos.y - sade) as i32,
                     (sade * 2.0 * kameran_zoomaus) as u32,
                     (sade * 2.0 * kameran_zoomaus) as u32,
                 )))?;
-            },
+            }
         }
 
         Ok(())
