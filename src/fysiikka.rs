@@ -86,14 +86,14 @@ impl Fysiikallinen for Fysiikkakappale {
 
     /// Antaa kohteen sijainnin
     fn anna_sijainti(&self) -> Vektori {
-        self.kappale.borrow().sijainti
+        self.kappale.borrow().kulman_sijainti()
     }
 
     /// Asettaa kohteen sijainnin
     /// # Arguments
     /// * `sijainti` - Kohteen uusi sijainti
     fn aseta_sijainti(&mut self, sijainti: Vektori) {
-        self.kappale.borrow_mut().sijainti = sijainti;
+        self.kappale.borrow_mut().aseta_kulman_sijainti(sijainti);
     }
 
     /// Antaa kohteen muodon
@@ -255,22 +255,38 @@ impl Fysiikka {
 fn ovatko_paallekkain(kappale_a: &Kappale, kappale_b: &Kappale) -> bool {
     match (kappale_a.muoto, kappale_b.muoto) {
         (Muoto::Nelio(leveys_a, korkeus_a), Muoto::Nelio(leveys_b, korkeus_b)) => {
-            let vasen_a = kappale_a.sijainti.x;
-            let oikea_a = kappale_a.sijainti.x + leveys_a;
-            let vasen_b = kappale_b.sijainti.x;
-            let oikea_b = kappale_b.sijainti.x + leveys_b;
-            let ala_a = kappale_a.sijainti.y;
-            let yla_a = kappale_a.sijainti.y + korkeus_a;
-            let ala_b = kappale_b.sijainti.y;
-            let yla_b = kappale_b.sijainti.y + korkeus_b;
+            let sijainti_a = kappale_a.kulman_sijainti();
+            let sijainti_b = kappale_b.kulman_sijainti();
+
+            let vasen_a = sijainti_a.x;
+            let oikea_a = sijainti_a.x + leveys_a;
+            let vasen_b = sijainti_b.x;
+            let oikea_b = sijainti_b.x + leveys_b;
+            let ala_a = sijainti_a.y;
+            let yla_a = sijainti_a.y + korkeus_a;
+            let ala_b = sijainti_b.y;
+            let yla_b = sijainti_b.y + korkeus_b;
             !(oikea_a < vasen_b || oikea_b < vasen_a || yla_a < ala_b || yla_b < ala_a)
         }
         (Muoto::Ympyra(sade_a), Muoto::Ympyra(sade_b)) => {
-            (kappale_a.sijainti - kappale_b.sijainti).pituus() < (sade_a + sade_b)
+            (kappale_a.keskipisteen_sijainti() - kappale_b.keskipisteen_sijainti()).pituus()
+                < (sade_a + sade_b)
         }
-        (Muoto::Ympyra(sade), Muoto::Nelio(leveys, korkeus)) => {
-            let ympyra_sijainti = kappale_a.sijainti;
-            let nelio_sijainti = kappale_b.sijainti;
+        (Muoto::Ympyra(_), Muoto::Nelio(_, _)) => ympyran_ja_nelion_tormays(kappale_b, kappale_a),
+        (Muoto::Nelio(_, _), Muoto::Ympyra(_)) => ympyran_ja_nelion_tormays(kappale_a, kappale_b),
+    }
+}
+
+/// Tarkistaa ovatko annetut neliö ja ympyrä toistensa päällä.
+/// Antaa false, jos oletut muodot(ensin neliö ja sitten ympyrä) eivät päde.
+/// # Arguments
+/// * `nelio` - Pitää olla neliö tai false
+/// * `ympyra` - Pitää olla ympyrä tai false
+fn ympyran_ja_nelion_tormays(nelio: &Kappale, ympyra: &Kappale) -> bool {
+    if let Muoto::Nelio(leveys, korkeus) = nelio.muoto {
+        if let Muoto::Ympyra(sade) = ympyra.muoto {
+            let ympyra_sijainti = ympyra.keskipisteen_sijainti();
+            let nelio_sijainti = nelio.kulman_sijainti();
             let vasen = nelio_sijainti.x;
             let oikea = nelio_sijainti.x + leveys;
             let ala = nelio_sijainti.y;
@@ -280,7 +296,7 @@ fn ovatko_paallekkain(kappale_a: &Kappale, kappale_b: &Kappale) -> bool {
             let vasen_ala_kulma = Vektori::new(vasen, ala);
             let oikea_ala_kulma = Vektori::new(oikea, ala);
 
-            !(
+            return !(
                 // Rajataan neliö, jonka ulkopuolella törmäys ei voi tapahtua
                 ympyra_sijainti.x <= vasen - sade
                 || oikea + sade <= ympyra_sijainti.x
@@ -299,36 +315,8 @@ fn ovatko_paallekkain(kappale_a: &Kappale, kappale_b: &Kappale) -> bool {
                 || (ympyra_sijainti - oikea_ala_kulma).pituus() >= sade
                     && ympyra_sijainti.x > oikea
                     && ympyra_sijainti.y < ala
-            )
-        }
-        (Muoto::Nelio(leveys, korkeus), Muoto::Ympyra(sade)) => {
-            let ympyra_sijainti = kappale_b.sijainti;
-            let nelio_sijainti = kappale_a.sijainti;
-            let vasen = nelio_sijainti.x;
-            let oikea = nelio_sijainti.x + leveys;
-            let ala = nelio_sijainti.y;
-            let yla = nelio_sijainti.y + korkeus;
-            let vasen_yla_kulma = Vektori::new(vasen, yla);
-            let oikea_yla_kulma = Vektori::new(oikea, yla);
-            let vasen_ala_kulma = Vektori::new(vasen, ala);
-            let oikea_ala_kulma = Vektori::new(oikea, ala);
-
-            !(ympyra_sijainti.x <= vasen - sade
-                || oikea + sade <= ympyra_sijainti.x
-                || ympyra_sijainti.y <= ala - sade
-                || yla + sade <= ympyra_sijainti.y
-                || (ympyra_sijainti - vasen_yla_kulma).pituus() >= sade
-                    && ympyra_sijainti.x < vasen
-                    && ympyra_sijainti.y > yla
-                || (ympyra_sijainti - oikea_yla_kulma).pituus() >= sade
-                    && ympyra_sijainti.x > oikea
-                    && ympyra_sijainti.y > yla
-                || (ympyra_sijainti - vasen_ala_kulma).pituus() >= sade
-                    && ympyra_sijainti.x < vasen
-                    && ympyra_sijainti.y < ala
-                || (ympyra_sijainti - oikea_ala_kulma).pituus() >= sade
-                    && ympyra_sijainti.x > oikea
-                    && ympyra_sijainti.y < ala)
+            );
         }
     }
+    false
 }

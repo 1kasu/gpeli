@@ -1,9 +1,8 @@
 extern crate sdl2;
 
-use sdl2::image::{InitFlag, LoadTexture};
+use sdl2::image::InitFlag;
 use sdl2::pixels::Color;
 use sdl2::render::BlendMode;
-use sdl2::render::Canvas;
 
 pub mod fysiikka;
 pub mod maailma;

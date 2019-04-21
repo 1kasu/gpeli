@@ -22,8 +22,7 @@ const YLOS_LIIKKUMINEN: Scancode = Scancode::Up;
 const AMPUMINEN: Scancode = Scancode::Space;
 const PELIHAHMON_NOPEUS: f32 = 120.0;
 const AMMUKSEN_NOPEUS: f32 = 260.0;
-const AMMUKSEN_LEVEYS: f32 = 30.0;
-const AMMUKSEN_KORKEUS: f32 = 5.0;
+const AMMUKSEN_LEVEYS: f32 = 5.0;
 
 /// Selkeyttää koodia, kun arvataan, että vektorilla tarkoitetaan luotavan kappaleen nopeutta ja suuntaa.
 type Nopeus = Vektori;
@@ -116,30 +115,27 @@ impl Paivitys for PelihahmonPaivitys {
             // Päivitetään suunta
             pelihahmo.aseta_suunta(pelaajan_nopeus);
 
-            let hahmon_sijainti = hahmon_kappale.borrow().sijainti;
-
             // Pelihahmon ampuminen
             if syotteet.nappain_painettu(AMPUMINEN) {
                 // Lasketaan lisättävän ammuksen sijainti
-                let (pelaajan_leveys_puolikas, pelaajan_korkeus_puolikas) =
-                    match hahmon_kappale.borrow().muoto {
-                        Muoto::Nelio(leveys, korkeus) => (leveys / 2.0, korkeus / 2.0),
-                        Muoto::Ympyra(sade) => (sade, sade),
-                    };
-                let pelaajan_keskipiste = hahmon_sijainti
-                    + Vektori::new(pelaajan_leveys_puolikas, pelaajan_korkeus_puolikas);
-                let ammuksen_keskipiste = Vektori::new(AMMUKSEN_LEVEYS, AMMUKSEN_KORKEUS / 2.0);
+                let pelaajan_keskipiste = hahmon_kappale.borrow().keskipisteen_sijainti();
+                let pelaajan_koko = hahmon_kappale.borrow().muoto.koko();
                 let ammuksen_suunta = pelihahmo.anna_suunta();
-                let muutos = ammuksen_suunta * 2.0 * pelaajan_leveys_puolikas - ammuksen_keskipiste;
+
+                let ammuksen_muoto = Muoto::Ympyra(AMMUKSEN_LEVEYS);
+                let muutos_kerroin = pelaajan_koko.0 / 2.0 + ammuksen_muoto.koko().0 / 2.0 + 10.0;
+
+                let ammuksen_sijainti = pelaajan_keskipiste + ammuksen_suunta * muutos_kerroin;
 
                 // Lisätään ammus pelaajan katsomissuuntaan vähän matkan päähän
                 let r_kappale = lisaa_kappale(
                     maailma,
-                    Kappale {
-                        muoto: Muoto::Ympyra(AMMUKSEN_LEVEYS),
-                        sijainti: pelaajan_keskipiste + muutos,
-                        tagi: Ammus,
-                    },
+                    Kappale::new_keskipisteella(
+                        ammuksen_muoto,
+                        ammuksen_sijainti.x,
+                        ammuksen_sijainti.y,
+                        Ammus,
+                    ),
                     Color::RGB(0, 255, 255),
                 );
 
@@ -221,32 +217,38 @@ impl Paivitys for Peruspaivitys {
         // Pelihahmo
         let _rk = lisaa_kappale(
             maailma,
-            Kappale::new(Muoto::Nelio(20.0, 20.0), 320.0, 240.0, Pelaaja),
+            Kappale::new_keskipisteella(Muoto::Nelio(20.0, 20.0), 320.0, 240.0, Pelaaja),
             Color::RGB(255, 30, 30),
         );
         maailma.lisaa_pelihahmo(Pelihahmo::new(Rc::clone(&_rk)));
         maailma.lisaa_fysiikkakappale(Fysiikkakappale::new(Default::default(), _rk));
 
+        lisaa_kappale(
+            maailma,
+            Kappale::new_keskipisteella(Muoto::Ympyra(30.0), 0.0, 0.0, Seina),
+            Color::RGB(200, 200, 200),
+        );
+
         // Seinät
-        let esteiden_vari = Color::RGB(20, 20, 200);
+        let esteiden_vari = Color::RGB(10, 100, 200);
         let _rk = lisaa_fysiikka_kappale(
             maailma,
-            Kappale::new(Muoto::Nelio(640.0, 20.0), 320.0, 470.0, Seina),
+            Kappale::new_kulmalla(Muoto::Nelio(640.0, 20.0), 0.0, 0.0, Seina),
             esteiden_vari,
         );
         let _rk = lisaa_fysiikka_kappale(
             maailma,
-            Kappale::new(Muoto::Nelio(640.0, 20.0), 320.0, 10.0, Seina),
+            Kappale::new_kulmalla(Muoto::Nelio(640.0, 20.0), 0.0, 500.0, Seina),
             esteiden_vari,
         );
         let _rk = lisaa_fysiikka_kappale(
             maailma,
-            Kappale::new(Muoto::Nelio(20.0, 480.0), 10.0, 240.0, Seina),
+            Kappale::new_kulmalla(Muoto::Nelio(20.0, 480.0), 0.0, 20.0, Seina),
             esteiden_vari,
         );
         let _rk = lisaa_fysiikka_kappale(
             maailma,
-            Kappale::new(Muoto::Nelio(20.0, 480.0), 630.0, 240.0, Seina),
+            Kappale::new_kulmalla(Muoto::Nelio(20.0, 480.0), 620.0, 20.0, Seina),
             esteiden_vari,
         );
 

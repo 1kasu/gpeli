@@ -80,22 +80,27 @@ impl Piirrettava for Kappale {
     ) -> Result<(), String> {
         let texture_creator = canvas.texture_creator();
         let texture = texture_creator.load_texture("ympyra.png")?;
+        let sijainti = self.kulman_sijainti() * kameran_zoomaus + kameran_aiheuttama_muutos;
         match self.muoto {
             Muoto::Nelio(leveys, korkeus) => {
                 canvas.fill_rect(Some(Rect::new(
-                    (self.sijainti.x * kameran_zoomaus + kameran_aiheuttama_muutos.x) as i32,
-                    (self.sijainti.y * kameran_zoomaus + kameran_aiheuttama_muutos.y) as i32,
+                    sijainti.x as i32,
+                    sijainti.y as i32,
                     (leveys * kameran_zoomaus) as u32,
                     (korkeus * kameran_zoomaus) as u32,
                 )))?;
             }
             Muoto::Ympyra(sade) => {
-                canvas.copy(&texture, None, Some(Rect::new(
-                    (self.sijainti.x * kameran_zoomaus + kameran_aiheuttama_muutos.x - sade) as i32,
-                    (self.sijainti.y * kameran_zoomaus + kameran_aiheuttama_muutos.y - sade) as i32,
-                    (sade * 2.0 * kameran_zoomaus) as u32,
-                    (sade * 2.0 * kameran_zoomaus) as u32,
-                )))?;
+                canvas.copy(
+                    &texture,
+                    None,
+                    Some(Rect::new(
+                        sijainti.x as i32,
+                        sijainti.y as i32,
+                        (sade * 2.0 * kameran_zoomaus) as u32,
+                        (sade * 2.0 * kameran_zoomaus) as u32,
+                    )),
+                )?;
             }
         }
 
