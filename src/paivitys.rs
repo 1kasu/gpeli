@@ -13,6 +13,8 @@ use crate::maailma::Tagi::*;
 use crate::maailma::*;
 use crate::piirtaja::PiirrettavaKappale;
 use crate::syotteet::*;
+use crate::tekoaly::Alyllinen;
+use crate::tekoaly::SeurausAly;
 
 // Vakioita eri asioille
 const OIKEALLE_LIIKKUMINEN: Scancode = Scancode::Right;
@@ -107,7 +109,7 @@ impl Paivitys for PelihahmonPaivitys {
             let hahmon_kappale = pelihahmo.anna_kappale();
             let pelaajan_nopeus = Nopeus::new(x, y);
 
-            if let Some(hahmon_fysiikka) = maailma.anna_fysiikka(&hahmon_kappale) {
+            if let Some(hahmon_fysiikka) = maailma.anna_fysiikka_mut(&hahmon_kappale) {
                 hahmon_fysiikka.aseta_nopeus(pelaajan_nopeus);
             }
 
@@ -295,6 +297,16 @@ impl Paivitys for Peruspaivitys {
             esteiden_vari,
         );
 
+        // Luodaan AI hahmo
+        let _rk = lisaa_kappale(
+            maailma,
+            Kappale::new_keskipisteella(Muoto::Nelio(20.0, 20.0), 600.0, 540.0, Vihollinen),
+            Color::RGB(0, 0, 0),
+        );
+        maailma.lisaa_fysiikkakappale(Fysiikkakappale::new(Default::default(), Rc::clone(&_rk)));
+        maailma.lisaa_aly(Alyllinen::new(_rk, Box::new(SeurausAly)));
+
+        // Alustetaan syötteet
         self.pelihahmon_paivitys.alusta(maailma, syotteet, events);
     }
 
@@ -311,6 +323,8 @@ impl Paivitys for Peruspaivitys {
     ) {
         self.pelihahmon_paivitys
             .paivita(maailma, syotteet, paivitysaika);
+
+        maailma.laske_tekoalyt();
 
         let mut fysiikka = Fysiikka::new();
         fysiikka.laske_uudet_sijainnit(maailma.fysiikalliset(), paivitysaika);
@@ -354,7 +368,7 @@ impl Tormaystoiminta for AmmustenTormays {
         //println!("Yritetään poistaa ammus");
         let kopio = f_kappale.anna_kappale();
 
-        if let Some(piirto) = maailma.anna_piirrettavyys(&kopio) {
+        if let Some(piirto) = maailma.anna_piirrettavyys_mut(&kopio) {
             if let PiirrettavaKappale::Yksivarinen { ref mut vari, .. } = piirto {
                 *vari = Color::RGB(239, 40, 117);
             }

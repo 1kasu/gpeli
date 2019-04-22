@@ -10,6 +10,7 @@ pub mod paivitys;
 pub mod piirtaja;
 pub mod silmukka;
 pub mod syotteet;
+pub mod tekoaly;
 use crate::paivitys::*;
 use crate::piirtaja::*;
 use crate::silmukka::perussilmukka::Perussilmukka;
