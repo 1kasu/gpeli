@@ -248,25 +248,50 @@ impl Paivitys for Peruspaivitys {
         );
 
         // Seinät
+        let origo: Vektori = Default::default();
+        let seinan_paksuus = 40.0;
+        let x_pituus = 1000.0;
+        let y_pituus = 700.0;
         let esteiden_vari = Color::RGB(10, 100, 200);
+        // Luodaan seinät
         let _rk = lisaa_fysiikka_kappale(
             maailma,
-            Kappale::new_kulmalla(Muoto::Nelio(640.0, 20.0), 0.0, 0.0, Seina),
+            Kappale::new_kulmalla(
+                Muoto::Nelio(x_pituus, seinan_paksuus),
+                origo.x,
+                origo.y,
+                Seina,
+            ),
             esteiden_vari,
         );
         let _rk = lisaa_fysiikka_kappale(
             maailma,
-            Kappale::new_kulmalla(Muoto::Nelio(640.0, 20.0), 0.0, 500.0, Seina),
+            Kappale::new_kulmalla(
+                Muoto::Nelio(x_pituus, seinan_paksuus),
+                origo.x,
+                origo.y + seinan_paksuus + y_pituus,
+                Seina,
+            ),
             esteiden_vari,
         );
         let _rk = lisaa_fysiikka_kappale(
             maailma,
-            Kappale::new_kulmalla(Muoto::Nelio(20.0, 480.0), 0.0, 20.0, Seina),
+            Kappale::new_kulmalla(
+                Muoto::Nelio(seinan_paksuus, y_pituus),
+                origo.x,
+                origo.y + seinan_paksuus,
+                Seina,
+            ),
             esteiden_vari,
         );
         let _rk = lisaa_fysiikka_kappale(
             maailma,
-            Kappale::new_kulmalla(Muoto::Nelio(20.0, 480.0), 620.0, 20.0, Seina),
+            Kappale::new_kulmalla(
+                Muoto::Nelio(seinan_paksuus, y_pituus),
+                origo.x + x_pituus - seinan_paksuus,
+                origo.y + seinan_paksuus,
+                Seina,
+            ),
             esteiden_vari,
         );
 

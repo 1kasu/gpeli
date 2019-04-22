@@ -259,6 +259,9 @@ impl<'a> Peruspiirtaja<'a> {
     }
 
     /// Lisää annetun tekstuurin käytettäväksi
+    /// # Arguments
+    /// * `tekstuuri` - Lisättävä tekstuuri
+    /// * `nimi` - Tekstuurin nimi
     pub fn lisaa_tekstuuri(&mut self, tekstuuri: Texture<'a>, nimi: String) {
         self.tekstuurit.insert(nimi, tekstuuri);
     }

@@ -268,6 +268,7 @@ fn ovatko_paallekkain(kappale_a: &Kappale, kappale_b: &Kappale) -> bool {
             let yla_b = sijainti_b.y + korkeus_b;
             !(oikea_a < vasen_b || oikea_b < vasen_a || yla_a < ala_b || yla_b < ala_a)
         }
+        // TODO: Epäilen bugia ympyrän törmäyksissä, mutta hankala olla varma, kun ympyrä on oikeasti kuva
         (Muoto::Ympyra(sade_a), Muoto::Ympyra(sade_b)) => {
             (kappale_a.keskipisteen_sijainti() - kappale_b.keskipisteen_sijainti()).pituus()
                 < (sade_a + sade_b)
