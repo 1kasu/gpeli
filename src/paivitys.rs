@@ -4,17 +4,15 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use std::time::Duration;
 
-use crate::fysiikka::Fysiikallinen;
-use crate::fysiikka::Fysiikka;
-use crate::fysiikka::Fysiikkakappale;
-use crate::fysiikka::Tormaystiedot;
-use crate::fysiikka::Tormaystieto;
-use crate::maailma::Tagi::*;
+use crate::fysiikka::{Fysiikallinen, Fysiikka, Fysiikkakappale, Tormaystiedot, Tormaystieto};
+use crate::maailma::kappale::Tagi::*;
+use crate::maailma::kappale::{Kappale, Muoto, Tagi};
+use crate::maailma::pelihahmo::Pelihahmo;
+use crate::maailma::vektori::Vektori;
 use crate::maailma::*;
 use crate::piirtaja::PiirrettavaKappale;
 use crate::syotteet::*;
-use crate::tekoaly::Alyllinen;
-use crate::tekoaly::SeurausAly;
+use crate::tekoaly::{Alyllinen, SeurausAly};
 
 // Vakioita eri asioille
 const OIKEALLE_LIIKKUMINEN: Scancode = Scancode::Right;

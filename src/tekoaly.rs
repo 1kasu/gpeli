@@ -2,7 +2,11 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use crate::fysiikka::Fysiikkakappale;
-use crate::maailma::*;
+use crate::maailma::kappale::Kappale;
+use crate::maailma::pelihahmo::Pelihahmo;
+use crate::maailma::vektori::Vektori;
+use crate::maailma::Lisaosa;
+use crate::maailma::Pelihahmollinen;
 
 type RcKappale = Rc<RefCell<Kappale>>;
 

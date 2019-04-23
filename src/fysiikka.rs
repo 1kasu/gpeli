@@ -2,10 +2,8 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use std::time::Duration;
 
-use super::maailma::Kappale;
-use super::maailma::Muoto;
-use super::maailma::Tagi;
-use super::maailma::Vektori;
+use super::maailma::kappale::{Kappale, Muoto, Tagi};
+use super::maailma::vektori::Vektori;
 use crate::maailma::Lisaosa;
 
 type RcKappale = Rc<RefCell<Kappale>>;

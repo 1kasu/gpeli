@@ -9,19 +9,16 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
 
-use crate::maailma::Kappale;
-use crate::maailma::Lisaosa;
-use crate::maailma::Muoto;
-use crate::maailma::Perusmaailma;
-use crate::maailma::PiirrettavaMaailma;
-use crate::maailma::Vektori;
+use crate::maailma::kappale::{Kappale, Muoto};
+use crate::maailma::vektori::Vektori;
+use crate::maailma::{Lisaosa};
 
 /// Huolehtii pelimaailman esittämisestä käyttäjälle.
 pub trait Piirtaja {
     /// Esittää pelitilan käyttäjälle jollain tavalla.
     /// # Arguments
     /// * `maailma` - Esitettävä pelimaailma
-    fn piirra_maailma(&mut self, maailma: &Perusmaailma) -> Result<(), String>;
+    fn piirra_maailma(&mut self, maailma: &PiirrettavaMaailma) -> Result<(), String>;
     /// Asettaa kameran sijainnin
     /// # Arguments
     /// * `kameran_sijainti` - Piirtavan kameran sijainti
@@ -35,6 +32,17 @@ pub trait Piirtaja {
     /// * `etaisyys` - Kuinka paljon kamera voi jäädä jälkeen seurattavasta. Suhteellinen arvo väliltä 0-1. Sisältää x ja y koordinaatin erikseen.
     fn aseta_kameran_seurauksen_etaisyys(&mut self, etaisyys: (f32, f32)) -> Result<(), String>;
 }
+
+pub trait PiirrettavaMaailma {
+    /// Piirrettävät kappaleet maailmassa
+    /// # Arguments
+    /// * `sijainti` - Ilmoittaa mistä päin maailmaa halutaan piirrettävät kappaleet
+    fn piirrettavat(&self, sijainti: Vektori) -> &[PiirrettavaKappale];
+
+    /// Antaa kameran sijainnin pelimaailmassa, jos maailma haluaa ehdottaa jotakin
+    fn anna_kameran_sijainti(&self) -> Option<Vektori>;
+}
+
 
 type RcKappale = Rc<RefCell<Kappale>>;
 
@@ -280,7 +288,7 @@ impl<'a> Piirtaja for Peruspiirtaja<'a> {
     /// Piirtää kuvan pelimaailman tilasta.
     /// # Arguments
     /// * `maailma` - Pelimaailma, jonka pohjalta kuva piirretään
-    fn piirra_maailma(&mut self, maailma: &Perusmaailma) -> Result<(), String> {
+    fn piirra_maailma(&mut self, maailma: &PiirrettavaMaailma) -> Result<(), String> {
         if let Some(sijainti) = maailma.anna_kameran_sijainti() {
             self.aseta_kameran_sijainti(sijainti)?;
         }

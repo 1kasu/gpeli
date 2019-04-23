@@ -4,10 +4,10 @@ use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use std::time::Instant;
 
-use super::super::maailma::*;
-use super::super::paivitys::*;
-use super::super::piirtaja::*;
-use super::super::syotteet::*;
+use crate::maailma::*;
+use crate::paivitys::*;
+use crate::piirtaja::*;
+use crate::syotteet::*;
 use super::Paasilmukka;
 //use std::fs::File;
 //use std::io::LineWriter;
