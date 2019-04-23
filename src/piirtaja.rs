@@ -42,6 +42,7 @@ type RcKappale = Rc<RefCell<Kappale>>;
 pub enum PiirrettavaKappale {
     /// Yksivärinen kappale, jolla on väri ja kappale (jolla on muoto, koko, sijainti...)
     Yksivarinen { kappale: RcKappale, vari: Color },
+    /// Kappale, joka sisältää sen käyttämän tekstuurn nimen.
     Kuvallinen {
         kappale: RcKappale,
         kuvan_nimi: String,
@@ -64,6 +65,7 @@ pub trait Piirrettava {
     /// * `canvas` - Canvas, jolle piirretään
     /// * `kameran_aiheuttama_muunnos` - Kameran sijainnista johtuva muunnos
     /// * `kameran_zoomaus` - Kameran zoomauksesta johtuva muunnos
+    /// * `tekstuurit` - Käytössä olevat tekstuurit
     fn piirra(
         &self,
         canvas: &mut Canvas<sdl2::video::Window>,
@@ -108,6 +110,12 @@ impl Kappale {
         Ok(())
     }
 
+    /// Piirtää käyttämällä annettua tekstuuria
+    /// # Arguments
+    /// * `canvas` - Canvas, jolle piirretään
+    /// * `kameran_aiheuttama_muunnos` - Kameran sijainnista johtuva muunnos
+    /// * `kameran_zoomaus` - Kameran zoomauksesta johtuva muunnos
+    /// * `tekstuuri` - Piirrettäessä käytettävä tekstuuri
     fn piirra_kuvalla(
         &self,
         canvas: &mut Canvas<sdl2::video::Window>,
@@ -153,6 +161,7 @@ impl Piirrettava for PiirrettavaKappale {
     /// * `canvas` - Canvas, jolle piirretään
     /// * `kameran_aiheuttama_muunnos` - Kameran sijainnista johtuva muunnos
     /// * `kameran_zoomaus` - Kameran zoomauksesta johtuva muunnos
+    /// * `tesktuurit` - Käytössä olevat tekstuurit
     fn piirra(
         &self,
         canvas: &mut Canvas<sdl2::video::Window>,
@@ -198,7 +207,7 @@ pub struct Peruspiirtaja<'a> {
     canvas: Canvas<sdl2::video::Window>,
     /// Kamera, jonka näkökulmasta pelimaailma esitetään
     kamera: Kamera,
-
+    /// Käytössä olevat tekstuurit
     tekstuurit: HashMap<String, Texture<'a>>,
 }
 

@@ -101,7 +101,7 @@ impl Fysiikallinen for Fysiikkakappale {
         self.kappale.borrow().muoto
     }
 
-    /// Päivittää kappaleen sijainnin annetun ajan mukaan
+    /// Laskee kappaleen uuden sijainnin annetun ajan mukaan
     /// # Arguments
     /// * `paivitysaika` - Päivityksessä käytettävä aika
     fn laske_uusi_sijainti(&self, paivitysaika: &Duration) -> Vektori<f32> {

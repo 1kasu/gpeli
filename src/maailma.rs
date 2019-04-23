@@ -100,6 +100,9 @@ impl Perusmaailma {
         }
     }
 
+    /// Lisää tekoälyn maailmaan
+    /// # Arguments
+    /// * `alyllinen` - Lisättävä tekoäly
     pub fn lisaa_aly(&mut self, alyllinen: Alyllinen) {
         self.alylliset.push(alyllinen);
     }
@@ -114,10 +117,12 @@ impl Perusmaailma {
         &mut self.fysiikka_kappaleet
     }
 
+    /// Antaa kaikki ai-hahmot
     pub fn alylliset(&mut self) -> &mut [Alyllinen] {
         &mut self.alylliset
     }
 
+    /// Toteuttaa kaikkien tekoälyjen toiminnot
     pub fn laske_tekoalyt(&mut self) {
         let tmaailma = TekoalyMaailma::new(
             &mut self.kappaleet,
