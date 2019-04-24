@@ -10,14 +10,6 @@ use crate::maailma::Pelihahmollinen;
 
 type RcKappale = Rc<RefCell<Kappale>>;
 
-/// Sisältää tekoälyn ja kappale, johon tekoäly viittaa
-pub struct Alyllinen {
-    /// Kappale, jolla tekoäly on toiminnassa
-    kappale: RcKappale,
-    /// Kappaleen käyttämä tekoäly
-    aly: Box<Aly>,
-}
-
 /// Sisältää tekoälyn tarvitsemat tiedot maailmasta
 pub struct TekoalyMaailma<'a> {
     /// Kappaleet
@@ -65,6 +57,14 @@ impl<'a> Pelihahmollinen for TekoalyMaailma<'a> {
     }
 }
 
+/// Sisältää tekoälyn ja kappale, johon tekoäly viittaa
+pub struct Alyllinen {
+    /// Kappale, jolla tekoäly on toiminnassa
+    kappale: RcKappale,
+    /// Kappaleen käyttämä tekoäly
+    aly: Box<Aly>,
+}
+
 impl Alyllinen {
     /// Luo uuden älyllisen kappaleen
     /// # Arguments
@@ -98,6 +98,8 @@ pub trait Aly {
     /// * `maailma` - Maailma, jonka perusteella toimitaan
     /// * `oma_kappale` Tekoälyn ohjaama kappale
     fn alyile(&self, maailma: &TekoalyMaailma, oma_kappale: &RcKappale) -> AlyToiminta;
+    
+    fn box_clone(&self) -> Box<Aly>;
 }
 
 /// Tekoälyn mahdolliset toimintavaihtoehdot
@@ -109,6 +111,7 @@ pub enum AlyToiminta {
 }
 
 /// Tekoäly, joka ohjaa ohjattavan kappaleen liikkumaan suoraan pelaajan ohjaamaa hahmoa kohti
+#[derive(Copy, Clone)]
 pub struct SeurausAly;
 
 impl Aly for SeurausAly {
@@ -124,5 +127,9 @@ impl Aly for SeurausAly {
             return AlyToiminta::Liiku { suunta: oma_suunta };
         }
         AlyToiminta::Laiskottele
+    }
+    
+    fn box_clone(&self) -> Box<Aly> {
+        Box::new((*self).clone())
     }
 }

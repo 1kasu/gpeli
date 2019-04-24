@@ -10,7 +10,8 @@ use crate::maailma::kappale::{Kappale, Muoto, Tagi};
 use crate::maailma::pelihahmo::Pelihahmo;
 use crate::maailma::vektori::Vektori;
 use crate::maailma::*;
-use crate::piirtaja::PiirrettavaKappale;
+use crate::piirtaja::{PiirrettavaKappale, Piirtotapa};
+use crate::spawneri::Spawneri;
 use crate::syotteet::*;
 use crate::tekoaly::{Alyllinen, SeurausAly};
 
@@ -34,7 +35,12 @@ pub trait Paivitys {
     /// * `maailma` - Pelimaailma, joka alustetaan
     /// * `syotteet` - Alustettavat syotteet
     /// * `events` - Sdl:n osa, jolta voidaan kysyä tapahtumia kuten näppäinten painalluksia
-    fn alusta(&self, maailma: &mut Perusmaailma, syotteet: &mut Syotteet, events: &sdl2::EventPump);
+    fn alusta(
+        &mut self,
+        maailma: &mut Perusmaailma,
+        syotteet: &mut Syotteet,
+        events: &sdl2::EventPump,
+    );
 
     /// Päivittää annetun pelimaailman tilan annetuilla syötteillä ja päivitysajalla
     /// # Arguments
@@ -42,7 +48,7 @@ pub trait Paivitys {
     /// * `syotteet` - Päivityksessä käytettävät syötteet
     /// * `paivitysaika` - Aika, jonka verran pelimaailmaa paivitetaan
     fn paivita(
-        &self,
+        &mut self,
         maailma: &mut Perusmaailma,
         syotteet: &mut Syotteet,
         paivitys_aika: &Duration,
@@ -52,6 +58,7 @@ pub trait Paivitys {
 /// Simppeli päivitys, joka huolehtii pelin toiminnasta
 pub struct Peruspaivitys {
     pelihahmon_paivitys: PelihahmonPaivitys,
+    spawnerit: Vec<Spawneri>,
 }
 
 struct PelihahmonPaivitys;
@@ -63,7 +70,7 @@ impl Paivitys for PelihahmonPaivitys {
     /// * `syotteet` - Alustettavat syotteet
     /// * `events` - Sdl:n osa, jolta voidaan kysyä tapahtumia kuten näppäinten painalluksia
     fn alusta(
-        &self,
+        &mut self,
         _maailma: &mut Perusmaailma,
         syotteet: &mut Syotteet,
         events: &sdl2::EventPump,
@@ -81,7 +88,7 @@ impl Paivitys for PelihahmonPaivitys {
     /// * `syotteet` - Päivityksessä käytettävät syötteet
     /// * `paivitysaika` - Aika, jonka verran pelimaailmaa paivitetaan
     fn paivita(
-        &self,
+        &mut self,
         maailma: &mut Perusmaailma,
         syotteet: &mut Syotteet,
         _paivitysaika: &Duration,
@@ -160,6 +167,7 @@ impl Peruspaivitys {
     pub fn new() -> Self {
         Peruspaivitys {
             pelihahmon_paivitys: PelihahmonPaivitys,
+            spawnerit: Default::default(),
         }
     }
 }
@@ -175,10 +183,10 @@ fn lisaa_kappale(
     vari: Color,
 ) -> Rc<RefCell<Kappale>> {
     let r_kappale = maailma.lisaa_kappale(kappale);
-    maailma.lisaa_piirrettava_kappale(PiirrettavaKappale::Yksivarinen {
-        kappale: Rc::clone(&r_kappale),
-        vari: vari,
-    });
+    maailma.lisaa_piirrettava_kappale(PiirrettavaKappale::new(
+        Rc::clone(&r_kappale),
+        Piirtotapa::Yksivarinen { vari: vari },
+    ));
     r_kappale
 }
 
@@ -193,10 +201,10 @@ fn lisaa_kuvallinen_kappale(
     kuva: String,
 ) -> Rc<RefCell<Kappale>> {
     let r_kappale = maailma.lisaa_kappale(kappale);
-    maailma.lisaa_piirrettava_kappale(PiirrettavaKappale::Kuvallinen {
-        kappale: Rc::clone(&r_kappale),
-        kuvan_nimi: kuva,
-    });
+    maailma.lisaa_piirrettava_kappale(PiirrettavaKappale::new(
+        Rc::clone(&r_kappale),
+        Piirtotapa::Kuvallinen { kuvan_nimi: kuva },
+    ));
     r_kappale
 }
 
@@ -211,10 +219,10 @@ fn lisaa_fysiikka_kappale(
     vari: Color,
 ) -> Rc<RefCell<Kappale>> {
     let r_kappale = maailma.lisaa_kappale(kappale);
-    maailma.lisaa_piirrettava_kappale(PiirrettavaKappale::Yksivarinen {
-        kappale: Rc::clone(&r_kappale),
-        vari: vari,
-    });
+    maailma.lisaa_piirrettava_kappale(PiirrettavaKappale::new(
+        Rc::clone(&r_kappale),
+        Piirtotapa::Yksivarinen { vari: vari },
+    ));
     let f_kappale = Fysiikkakappale::new(Default::default(), Rc::clone(&r_kappale));
     maailma.lisaa_fysiikkakappale(f_kappale);
     r_kappale
@@ -227,7 +235,7 @@ impl Paivitys for Peruspaivitys {
     /// * `syotteet` - Alustettavat syotteet
     /// * `events` - Sdl:n osa, jolta voidaan kysyä tapahtumia kuten näppäinten painalluksia
     fn alusta(
-        &self,
+        &mut self,
         maailma: &mut Perusmaailma,
         syotteet: &mut Syotteet,
         events: &sdl2::EventPump,
@@ -304,6 +312,16 @@ impl Paivitys for Peruspaivitys {
         maailma.lisaa_fysiikkakappale(Fysiikkakappale::new(Default::default(), Rc::clone(&_rk)));
         maailma.lisaa_aly(Alyllinen::new(_rk, Box::new(SeurausAly)));
 
+        self.spawnerit.push(Spawneri::new(
+            Duration::new(5, 0),
+            Kappale::new_keskipisteella(Muoto::Nelio(20.0, 20.0), 600.0, 540.0, Vihollinen),
+            Piirtotapa::Yksivarinen {
+                vari: Color::RGB(0, 0, 0),
+            },
+            Some(Default::default()),
+            Some(Box::new(SeurausAly)),
+        ));
+
         // Alustetaan syötteet
         self.pelihahmon_paivitys.alusta(maailma, syotteet, events);
     }
@@ -314,7 +332,7 @@ impl Paivitys for Peruspaivitys {
     /// * `syotteet` - Päivityksessä käytettävät syötteet
     /// * `paivitysaika` - Aika, jonka verran pelimaailmaa paivitetaan
     fn paivita(
-        &self,
+        &mut self,
         maailma: &mut Perusmaailma,
         syotteet: &mut Syotteet,
         paivitysaika: &Duration,
@@ -322,12 +340,16 @@ impl Paivitys for Peruspaivitys {
         self.pelihahmon_paivitys
             .paivita(maailma, syotteet, paivitysaika);
 
+        for spawneri in &mut self.spawnerit {
+            spawneri.paivita_spawneria(maailma, paivitysaika);
+        }
+
         maailma.laske_tekoalyt();
 
         let mut fysiikka = Fysiikka::new();
         fysiikka.laske_uudet_sijainnit(maailma.fysiikalliset(), paivitysaika);
 
-        TormaystenKasittely::kasittele_tormaykset(fysiikka.tormaykset, maailma)
+        TormaystenKasittely::kasittele_tormaykset(fysiikka.tormaykset, maailma);
     }
 }
 
@@ -366,12 +388,6 @@ impl Tormaystoiminta for AmmustenTormays {
         //println!("Yritetään poistaa ammus");
         let kopio = f_kappale.anna_kappale();
 
-        if let Some(piirto) = maailma.anna_piirrettavyys_mut(&kopio) {
-            if let PiirrettavaKappale::Yksivarinen { ref mut vari, .. } = piirto {
-                *vari = Color::RGB(239, 40, 117);
-            }
-        }
-
-        //maailma.lisaa_poistettava(kopio);
+        maailma.lisaa_poistettava(kopio);
     }
 }

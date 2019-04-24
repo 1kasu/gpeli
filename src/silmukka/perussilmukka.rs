@@ -4,11 +4,11 @@ use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use std::time::Instant;
 
+use super::Paasilmukka;
 use crate::maailma::*;
 use crate::paivitys::*;
 use crate::piirtaja::*;
 use crate::syotteet::*;
-use super::Paasilmukka;
 //use std::fs::File;
 //use std::io::LineWriter;
 //use std::io::Write;
@@ -24,7 +24,7 @@ pub struct Perussilmukka<'a> {
     /// Pelin käyttämät syötteet
     syotteet: Syotteet,
     /// Pelin käyttämä päivitys
-    paivitys: &'a Paivitys,
+    paivitys: &'a mut Paivitys,
 }
 
 impl<'a> Perussilmukka<'a> {
@@ -38,7 +38,7 @@ impl<'a> Perussilmukka<'a> {
         events: sdl2::EventPump,
         context: sdl2::Sdl,
         piirtaja: &'a mut Piirtaja,
-        paivitys: &'a Paivitys,
+        paivitys: &'a mut Paivitys,
     ) -> Self {
         Perussilmukka {
             events: events,
@@ -103,7 +103,7 @@ impl<'a> Paasilmukka for Perussilmukka<'a> {
                 .paivita(&mut maailma, &mut self.syotteet, &paivitysaika);
 
             maailma.poista_poistettavat();
-            
+
             self.piirtaja.piirra_maailma(&maailma)?;
         }
 

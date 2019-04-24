@@ -9,6 +9,7 @@ pub mod maailma;
 pub mod paivitys;
 pub mod piirtaja;
 pub mod silmukka;
+pub mod spawneri;
 pub mod syotteet;
 pub mod tekoaly;
 use crate::paivitys::*;
@@ -42,7 +43,7 @@ fn main() -> Result<(), String> {
     let texture_creator = canvas.texture_creator();
     let events = sdl_context.event_pump()?;
     let mut piirtaja = Peruspiirtaja::new(canvas)?;
-    let paivitys = Peruspaivitys::new();
+    let mut paivitys = Peruspaivitys::new();
 
     let seuraus = (0.2, 0.2);
     let zoomi = 1.0;
@@ -57,6 +58,6 @@ fn main() -> Result<(), String> {
     let texture = texture_creator.load_texture("ympyra.png")?;
     piirtaja.lisaa_tekstuuri(texture, "ammus".to_string());
 
-    let mut silmukka = Perussilmukka::new(events, sdl_context, &mut piirtaja, &paivitys);
+    let mut silmukka = Perussilmukka::new(events, sdl_context, &mut piirtaja, &mut paivitys);
     silmukka.kaynnista_silmukka()
 }

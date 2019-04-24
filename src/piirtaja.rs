@@ -46,23 +46,40 @@ pub trait PiirrettavaMaailma {
 
 type RcKappale = Rc<RefCell<Kappale>>;
 
-/// Piirrettävä  kappale
-pub enum PiirrettavaKappale {
-    /// Yksivärinen kappale, jolla on väri ja kappale (jolla on muoto, koko, sijainti...)
-    Yksivarinen { kappale: RcKappale, vari: Color },
-    /// Kappale, joka sisältää sen käyttämän tekstuurn nimen.
-    Kuvallinen {
-        kappale: RcKappale,
-        kuvan_nimi: String,
-    },
+/// Kappale, joka voidaan piirtää
+pub struct PiirrettavaKappale{
+    /// Piirrettävä kappale
+    kappale: RcKappale,
+    /// Millä tavalla piirtäminen tehdään
+    piirtotapa: Piirtotapa
+}
+
+
+impl PiirrettavaKappale{
+    /// Luo uuden piirrettävän kappaleen
+    /// # Arguments
+    /// * `kappale` - Piirrettävä kappale
+    /// * `piirtotapa` - Tapa, jolla kappale piirretään
+    pub fn new(kappale: RcKappale, piirtotapa: Piirtotapa) -> Self{
+        PiirrettavaKappale{
+            kappale: kappale,
+            piirtotapa: piirtotapa
+        }
+    }
+}
+
+/// Piirtämisessä käytettävä tapa
+# [derive(Clone)]
+pub enum Piirtotapa {
+    /// Piirretään yksivärisenä
+    Yksivarinen { vari: Color },
+    /// Piirretään kuvan avulla
+    Kuvallinen {kuvan_nimi: String}
 }
 
 impl Lisaosa for PiirrettavaKappale {
     fn anna_kappale(&self) -> RcKappale {
-        match self {
-            PiirrettavaKappale::Yksivarinen { kappale, .. } => Rc::clone(kappale),
-            PiirrettavaKappale::Kuvallinen { kappale, .. } => Rc::clone(kappale),
-        }
+        Rc::clone(&self.kappale)
     }
 }
 
@@ -177,21 +194,19 @@ impl Piirrettava for PiirrettavaKappale {
         kameran_zoomaus: f32,
         tekstuurit: &HashMap<String, Texture>,
     ) -> Result<(), String> {
-        match &self {
-            PiirrettavaKappale::Yksivarinen {
-                kappale: k,
-                vari: v,
+        match &self.piirtotapa {
+            Piirtotapa::Yksivarinen {
+                vari: v
             } => {
                 canvas.set_draw_color(v.rgba());
-                k.borrow()
+                self.kappale.borrow()
                     .piirra(canvas, kameran_aiheuttama_muutos, kameran_zoomaus)?;
             }
-            PiirrettavaKappale::Kuvallinen {
-                kappale: k,
-                kuvan_nimi: kuva,
+            Piirtotapa::Kuvallinen {
+                kuvan_nimi: kuva
             } => {
                 if let Some(kuva) = tekstuurit.get(kuva) {
-                    k.borrow().piirra_kuvalla(
+                    self.kappale.borrow().piirra_kuvalla(
                         canvas,
                         kameran_aiheuttama_muutos,
                         kameran_zoomaus,
@@ -200,7 +215,7 @@ impl Piirrettava for PiirrettavaKappale {
                 } else {
                     // Kuva ei löydy, joten piirretään punaisella päälle
                     canvas.set_draw_color(Color::RGB(255, 0, 0));
-                    k.borrow()
+                    self.kappale.borrow()
                         .piirra(canvas, kameran_aiheuttama_muutos, kameran_zoomaus)?;
                 }
             }

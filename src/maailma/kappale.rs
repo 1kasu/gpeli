@@ -40,6 +40,7 @@ pub enum Tagi {
 }
 
 /// Kappale, jolla on muoto ja sijainti
+#[derive(Copy, Clone)]
 pub struct Kappale {
     /// Kappaleen muoto
     pub muoto: Muoto,

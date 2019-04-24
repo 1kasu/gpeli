@@ -4,7 +4,7 @@ use std::rc::Rc;
 use crate::fysiikka::{Fysiikallinen, Fysiikkakappale};
 use crate::piirtaja::PiirrettavaKappale;
 use crate::piirtaja::PiirrettavaMaailma;
-use crate::tekoaly::{AlyToiminta, Alyllinen, TekoalyMaailma};
+use crate::tekoaly::{AlyToiminta, Alyllinen, TekoalyMaailma, Aly};
 use kappale::Kappale;
 use pelihahmo::Pelihahmo;
 use vektori::Vektori;
@@ -17,7 +17,7 @@ pub type RcKappale = Rc<RefCell<Kappale>>;
 
 /// Sisältää tiedon pelimaailman tilasta eli kaikkien kappaleiden tiedot
 #[derive(Default)]
-pub struct Perusmaailma {
+pub struct Perusmaailma{
     /// Pelimaailman sisältämät kappaleet
     kappaleet: Vec<RcKappale>,
     /// Maailmassa olevat fysiikkakappaleet
@@ -81,6 +81,7 @@ impl Perusmaailma {
     pub fn lisaa_aly(&mut self, alyllinen: Alyllinen) {
         self.alylliset.push(alyllinen);
     }
+    
 
     /// Onko maailmassa pelihahmo olemassa
     pub fn onko_pelihahmo(&self) -> bool {
@@ -162,7 +163,7 @@ pub trait Pelihahmollinen {
     fn anna_pelihahmo(&self) -> Option<&Pelihahmo>;
 }
 
-impl Pelihahmollinen for Perusmaailma {
+impl Pelihahmollinen for Perusmaailma{
     /// Antaa pelihahmon, jos sellainen on luotu
     fn anna_pelihahmo_mut(&mut self) -> Option<&mut Pelihahmo> {
         match &mut self.pelihahmo {
