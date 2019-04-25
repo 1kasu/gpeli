@@ -358,7 +358,16 @@ pub struct TormaystenKasittely;
 impl TormaystenKasittely {
     fn kasittele_tormaykset(tormaykset: Tormaystiedot, maailma: &mut Perusmaailma) {
         let mut mahdolliset_tapahtumat = Vec::new();
-        mahdolliset_tapahtumat.push(AmmustenTormays);
+        mahdolliset_tapahtumat.push(YleinenTormays::new(
+            vec![Ammus],
+            vec![Seina, Vihollinen, Ammus, Pelaaja],
+            &tuhoa_tormaaja,
+        ));
+        mahdolliset_tapahtumat.push(YleinenTormays::new(
+            vec![Vihollinen],
+            vec![Ammus],
+            &tuhoa_tormaaja,
+        ));
         for tormays in tormaykset.anna_tormaykset() {
             for toiminta in &mahdolliset_tapahtumat {
                 if toiminta.ehto(maailma.fysiikalliset()[tormays.indeksi].anna_tagi()) {
@@ -370,24 +379,79 @@ impl TormaystenKasittely {
 }
 
 trait Tormaystoiminta {
-    /// Tapahtuuko toiminto
+    /// Koskeeko törmäystapahtuma annettau tägiä
     fn ehto(&self, tagi: Tagi) -> bool;
-    /// Toiminta, joka tehdään ehdon toteutuessa
+    /// Toiminta, joka tehdään ehdon toteutuessa.
+    /// # Arguments
+    /// * `tormays` - Törmäyksen tiedot
+    /// * `maailma` - Pelimaailma, jossa törmäys tapahtuu
     fn toiminta(&self, tormays: &Tormaystieto, maailma: &mut Perusmaailma);
 }
 
-struct AmmustenTormays;
+/// Törmäys tapahtuma, jolle voidaan asettaa ehdoksi törmääjän mahdolliset tägit
+/// ja törmätyn mahdolliset tägit. Parametrinä annetaan myös törmäyksestä seuraavan
+/// tapahtuman funktio.
+struct YleinenTormays<'a> {
+    /// Törmääjän tägit
+    omat_tagit: Vec<Tagi>,
+    /// Törmätyn tägit
+    kohteen_tagit: Vec<Tagi>,
+    /// Tapahtuma, jota kutsutaan, jos ehdot toteutuvat
+    tapahtuma: &'a Fn(&Tormaystieto, &mut Perusmaailma),
+}
 
-impl Tormaystoiminta for AmmustenTormays {
+impl<'a> YleinenTormays<'a> {
+    /// Luo uuden törmäystapahtuman
+    /// # Arguments
+    /// * `omat_tagit` - Lista törmääjän tageista, joita törmäystapahtuma koskee
+    /// * `kohteiden_tagit` - Lista törmätyn kohteen tageista, jotka vaaditaa törmäystapahtumaa varten
+    /// * `tapahtuma` - Funktio, jota kutsutaan, jos törmääjä ja törmätty vastaavat annettuja tageja
+    fn new(
+        omat_tagit: Vec<Tagi>,
+        kohteiden_tagit: Vec<Tagi>,
+        tapahtuma: &'a Fn(&Tormaystieto, &mut Perusmaailma),
+    ) -> Self {
+        YleinenTormays {
+            omat_tagit: omat_tagit,
+            kohteen_tagit: kohteiden_tagit,
+            tapahtuma,
+        }
+    }
+}
+
+impl<'a> Tormaystoiminta for YleinenTormays<'a> {
+    /// Koskeeko törmäystapahtuma annettau tägiä
     fn ehto(&self, tagi: Tagi) -> bool {
-        tagi == Ammus
+        self.omat_tagit.contains(&tagi)
     }
 
+    /// Toiminta, joka tehdään ehdon toteutuessa. Tarkistaa vielä onko törmäyksen kohde
+    /// oikea ennen varsinaista törmäysfunktion kutsua
+    /// # Arguments
+    /// * `tormays` - Törmäyksen tiedot
+    /// * `maailma` - Pelimaailma, jossa törmäys tapahtuu
     fn toiminta(&self, tormays: &Tormaystieto, maailma: &mut Perusmaailma) {
-        let f_kappale = &maailma.fysiikalliset()[tormays.indeksi];
-        //println!("Yritetään poistaa ammus");
-        let kopio = f_kappale.anna_kappale();
-
-        maailma.lisaa_poistettava(kopio);
+        // Katstaan onko mikään törmätyn kohteen tageista haluttujen joukossa
+        if self
+            .kohteen_tagit
+            .iter()
+            .skip_while(|x| !tormays.anna_tagit().contains(x))
+            .next()
+            .is_some()
+        {
+            (self.tapahtuma)(tormays, maailma);
+        }
     }
+}
+
+/// Tuhoaa törmääjän
+/// # Arguments
+/// * `tormays` - Törmäystapahtuman tiedot
+/// * `maailma` - Maailma, jossa törmäystapahtui
+fn tuhoa_tormaaja(tormays: &Tormaystieto, maailma: &mut Perusmaailma) {
+    let f_kappale = &maailma.fysiikalliset()[tormays.indeksi];
+    //println!("Yritetään poistaa ammus");
+    let kopio = f_kappale.anna_kappale();
+
+    maailma.lisaa_poistettava(kopio);
 }
