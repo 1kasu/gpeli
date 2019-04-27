@@ -352,8 +352,10 @@ impl Paivitys for Peruspaivitys {
 
         let mut fysiikka = Fysiikka::new();
         fysiikka.laske_uudet_sijainnit(maailma.fysiikalliset(), paivitysaika);
-        
-        maailma.animaatiot.paivita_animaatiot(&maailma.kokonais_peliaika);
+
+        maailma
+            .animaatiot
+            .paivita_animaatiot(&maailma.kokonais_peliaika);
 
         TormaystenKasittely::kasittele_tormaykset(fysiikka.tormaykset, maailma);
     }
@@ -372,7 +374,7 @@ impl TormaystenKasittely {
         mahdolliset_tapahtumat.push(YleinenTormays::new(
             vec![Vihollinen],
             vec![Ammus],
-            &tuhoa_tormaaja,
+            &animaatio_tuhoutuminen,
         ));
         for tormays in tormaykset.anna_tormaykset() {
             for toiminta in &mahdolliset_tapahtumat {
@@ -458,13 +460,21 @@ fn tuhoa_tormaaja(tormays: &Tormaystieto, maailma: &mut Perusmaailma) {
     let f_kappale = &maailma.fysiikalliset()[tormays.indeksi];
     //println!("Yritetään poistaa ammus");
     let kopio = f_kappale.anna_kappale();
-    
+
+    maailma.lisaa_poistettava(kopio);
+}
+
+fn animaatio_tuhoutuminen(tormays: &Tormaystieto, maailma: &mut Perusmaailma) {
+    let f_kappale = &maailma.fysiikalliset()[tormays.indeksi];
+    //println!("Yritetään poistaa ammus");
+    let kopio = f_kappale.anna_kappale();
+
     maailma.animaatiot.lisaa_animaatio(Kuolevainen::new(
         Animaatio::new(
             kopio.borrow().keskipisteen_sijainti(),
             maailma.kokonais_peliaika,
         ),
-        maailma.kokonais_peliaika + std::time::Duration::new(8, 0),
+        maailma.kokonais_peliaika + std::time::Duration::new(1, 0),
     ));
 
     maailma.lisaa_poistettava(kopio);

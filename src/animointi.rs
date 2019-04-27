@@ -81,18 +81,17 @@ impl Animaatio {
 
     pub fn anna_palat(&self, palat: &mut Vec<PiirrettavaKappale>, framen_aika: &Duration) {
         let frame_sekunteina = framen_aika.as_micros() as f32 / 1_000_000 as f32;
+        let koko = anna_lineaarinen_interpolaatio(0.0, 20.0, 1.0, 1.0, frame_sekunteina);
+        println!("{:?} {:?}", koko, frame_sekunteina);
         let a = PiirrettavaKappale::new(
             Rc::new(RefCell::new(Kappale::new_keskipisteella(
-                Nelio(
-                    anna_lineaarinen_interpolaatio(0.0, 100.0, 8.0, 1.0, frame_sekunteina),
-                    anna_lineaarinen_interpolaatio(0.0, 100.0, 8.0, 1.0, frame_sekunteina),
-                ),
+                Nelio(koko, koko),
                 self.sijainti.x,
                 self.sijainti.y,
                 Partikkeli,
             ))),
             Piirtotapa::Yksivarinen {
-                vari: Color::RGB(100, 100, 100),
+                vari: Color::RGB(200, 0, 100),
             },
         );
         palat.push(a);
@@ -124,7 +123,7 @@ impl<T> Deref for Kuolevainen<T> {
     }
 }
 
-fn anna_lineaarinen_interpolaatio(
+pub fn anna_lineaarinen_interpolaatio(
     alku_x: f32,
     alku_y: f32,
     loppu_x: f32,
