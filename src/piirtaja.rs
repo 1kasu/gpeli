@@ -11,7 +11,7 @@ use std::rc::Rc;
 
 use crate::maailma::kappale::{Kappale, Muoto};
 use crate::maailma::vektori::Vektori;
-use crate::maailma::{Lisaosa};
+use crate::maailma::Lisaosa;
 
 /// Huolehtii pelimaailman esittämisestä käyttäjälle.
 pub trait Piirtaja {
@@ -37,44 +37,72 @@ pub trait PiirrettavaMaailma {
     /// Piirrettävät kappaleet maailmassa
     /// # Arguments
     /// * `sijainti` - Ilmoittaa mistä päin maailmaa halutaan piirrettävät kappaleet
-    fn piirrettavat(&self, sijainti: Vektori) -> &[PiirrettavaKappale];
+    fn piirrettavat<'a>(
+        &'a self,
+        sijainti: Vektori,
+    ) -> Box<Iterator<Item = &'a PiirrettavaKappale> + 'a>;
 
     /// Antaa kameran sijainnin pelimaailmassa, jos maailma haluaa ehdottaa jotakin
     fn anna_kameran_sijainti(&self) -> Option<Vektori>;
 }
 
 
+pub struct YhdistettyPiirrettavamaailma<'a> {
+    pub maailma_a: &'a PiirrettavaMaailma,
+    pub maailma_b: &'a PiirrettavaMaailma,
+}
+
+impl<'b> PiirrettavaMaailma for YhdistettyPiirrettavamaailma<'b> {
+    /// Piirrettävät kappaleet maailmassa
+    /// # Arguments
+    /// * `sijainti` - Ilmoittaa mistä päin maailmaa halutaan piirrettävät kappaleet
+    fn piirrettavat<'a>(
+        &'a self,
+        sijainti: Vektori,
+    ) -> Box<Iterator<Item = &'a PiirrettavaKappale> + 'a> {
+        Box::new(
+            self.maailma_a
+                .piirrettavat(sijainti)
+                .chain(self.maailma_b.piirrettavat(sijainti)),
+        )
+    }
+
+    /// Antaa kameran sijainnin pelimaailmassa, jos maailma haluaa ehdottaa jotakin
+    fn anna_kameran_sijainti(&self) -> Option<Vektori> {
+        self.maailma_a.anna_kameran_sijainti()
+    }
+}
+
 type RcKappale = Rc<RefCell<Kappale>>;
 
 /// Kappale, joka voidaan piirtää
-pub struct PiirrettavaKappale{
+pub struct PiirrettavaKappale {
     /// Piirrettävä kappale
     kappale: RcKappale,
     /// Millä tavalla piirtäminen tehdään
-    piirtotapa: Piirtotapa
+    piirtotapa: Piirtotapa,
 }
 
-
-impl PiirrettavaKappale{
+impl PiirrettavaKappale {
     /// Luo uuden piirrettävän kappaleen
     /// # Arguments
     /// * `kappale` - Piirrettävä kappale
     /// * `piirtotapa` - Tapa, jolla kappale piirretään
-    pub fn new(kappale: RcKappale, piirtotapa: Piirtotapa) -> Self{
-        PiirrettavaKappale{
+    pub fn new(kappale: RcKappale, piirtotapa: Piirtotapa) -> Self {
+        PiirrettavaKappale {
             kappale: kappale,
-            piirtotapa: piirtotapa
+            piirtotapa: piirtotapa,
         }
     }
 }
 
 /// Piirtämisessä käytettävä tapa
-# [derive(Clone)]
+#[derive(Clone)]
 pub enum Piirtotapa {
     /// Piirretään yksivärisenä
     Yksivarinen { vari: Color },
     /// Piirretään kuvan avulla
-    Kuvallinen {kuvan_nimi: String}
+    Kuvallinen { kuvan_nimi: String },
 }
 
 impl Lisaosa for PiirrettavaKappale {
@@ -195,16 +223,13 @@ impl Piirrettava for PiirrettavaKappale {
         tekstuurit: &HashMap<String, Texture>,
     ) -> Result<(), String> {
         match &self.piirtotapa {
-            Piirtotapa::Yksivarinen {
-                vari: v
-            } => {
+            Piirtotapa::Yksivarinen { vari: v } => {
                 canvas.set_draw_color(v.rgba());
-                self.kappale.borrow()
+                self.kappale
+                    .borrow()
                     .piirra(canvas, kameran_aiheuttama_muutos, kameran_zoomaus)?;
             }
-            Piirtotapa::Kuvallinen {
-                kuvan_nimi: kuva
-            } => {
+            Piirtotapa::Kuvallinen { kuvan_nimi: kuva } => {
                 if let Some(kuva) = tekstuurit.get(kuva) {
                     self.kappale.borrow().piirra_kuvalla(
                         canvas,
@@ -215,8 +240,11 @@ impl Piirrettava for PiirrettavaKappale {
                 } else {
                     // Kuva ei löydy, joten piirretään punaisella päälle
                     canvas.set_draw_color(Color::RGB(255, 0, 0));
-                    self.kappale.borrow()
-                        .piirra(canvas, kameran_aiheuttama_muutos, kameran_zoomaus)?;
+                    self.kappale.borrow().piirra(
+                        canvas,
+                        kameran_aiheuttama_muutos,
+                        kameran_zoomaus,
+                    )?;
                 }
             }
         }

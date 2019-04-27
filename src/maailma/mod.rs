@@ -1,9 +1,10 @@
 use std::cell::RefCell;
 use std::rc::Rc;
+use std::time::Duration;
 
+use crate::animointi::Animaatiot;
 use crate::fysiikka::{Fysiikallinen, Fysiikkakappale};
-use crate::piirtaja::PiirrettavaKappale;
-use crate::piirtaja::PiirrettavaMaailma;
+use crate::piirtaja::{PiirrettavaKappale, PiirrettavaMaailma};
 use crate::tekoaly::{AlyToiminta, Alyllinen, TekoalyMaailma};
 use kappale::Kappale;
 use pelihahmo::Pelihahmo;
@@ -30,6 +31,9 @@ pub struct Perusmaailma {
     alylliset: Vec<Alyllinen>,
     /// Poistettavat kappaleet
     poistettavat: Vec<RcKappale>,
+
+    pub animaatiot: Animaatiot,
+    pub kokonais_peliaika: Duration,
 }
 
 impl Perusmaailma {
@@ -42,6 +46,8 @@ impl Perusmaailma {
             alylliset: Default::default(),
             pelihahmo: None,
             poistettavat: Vec::new(),
+            animaatiot: Default::default(),
+            kokonais_peliaika: Default::default(),
         }
     }
 
@@ -234,8 +240,15 @@ impl PiirrettavaMaailma for Perusmaailma {
     /// Piirrettävät kappaleet maailmassa
     /// # Arguments
     /// * `sijainti` - Ilmoittaa mistä päin maailmaa halutaan piirrettävät kappaleet
-    fn piirrettavat(&self, _sijainti: Vektori) -> &[PiirrettavaKappale] {
-        &self.piirrettavat_kappaleet
+    fn piirrettavat<'a>(
+        &'a self,
+        _sijainti: Vektori,
+    ) -> Box<Iterator<Item = &'a PiirrettavaKappale> + 'a> {
+        Box::new(
+            self.piirrettavat_kappaleet
+                .iter()
+                .chain(self.animaatiot.piirrettavat(_sijainti)),
+        )
     }
 
     /// Antaa kameran sijainnin pelimaailmassa, jos maailma haluaa ehdottaa jotakin

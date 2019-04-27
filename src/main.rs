@@ -4,6 +4,7 @@ use sdl2::image::{InitFlag, LoadTexture};
 use sdl2::pixels::Color;
 use sdl2::render::BlendMode;
 
+pub mod animointi;
 pub mod fysiikka;
 pub mod maailma;
 pub mod paivitys;
@@ -12,6 +13,7 @@ pub mod silmukka;
 pub mod spawneri;
 pub mod syotteet;
 pub mod tekoaly;
+
 use crate::paivitys::*;
 use crate::piirtaja::*;
 use crate::silmukka::perussilmukka::Perussilmukka;

@@ -4,6 +4,8 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use std::time::Duration;
 
+use crate::animointi::Animaatio;
+use crate::animointi::Kuolevainen;
 use crate::fysiikka::{Fysiikallinen, Fysiikka, Fysiikkakappale, Tormaystiedot, Tormaystieto};
 use crate::maailma::kappale::Tagi::*;
 use crate::maailma::kappale::{Kappale, Muoto, Tagi};
@@ -337,6 +339,8 @@ impl Paivitys for Peruspaivitys {
         syotteet: &mut Syotteet,
         paivitysaika: &Duration,
     ) {
+        maailma.kokonais_peliaika += *paivitysaika;
+
         self.pelihahmon_paivitys
             .paivita(maailma, syotteet, paivitysaika);
 
@@ -348,6 +352,8 @@ impl Paivitys for Peruspaivitys {
 
         let mut fysiikka = Fysiikka::new();
         fysiikka.laske_uudet_sijainnit(maailma.fysiikalliset(), paivitysaika);
+        
+        maailma.animaatiot.paivita_animaatiot(&maailma.kokonais_peliaika);
 
         TormaystenKasittely::kasittele_tormaykset(fysiikka.tormaykset, maailma);
     }
@@ -447,11 +453,19 @@ impl<'a> Tormaystoiminta for YleinenTormays<'a> {
 /// Tuhoaa törmääjän
 /// # Arguments
 /// * `tormays` - Törmäystapahtuman tiedot
-/// * `maailma` - Maailma, jossa törmäystapahtui
+/// * `maailma` - Maailma, jossa törmäysta pahtui
 fn tuhoa_tormaaja(tormays: &Tormaystieto, maailma: &mut Perusmaailma) {
     let f_kappale = &maailma.fysiikalliset()[tormays.indeksi];
     //println!("Yritetään poistaa ammus");
     let kopio = f_kappale.anna_kappale();
+    
+    maailma.animaatiot.lisaa_animaatio(Kuolevainen::new(
+        Animaatio::new(
+            kopio.borrow().keskipisteen_sijainti(),
+            maailma.kokonais_peliaika,
+        ),
+        maailma.kokonais_peliaika + std::time::Duration::new(8, 0),
+    ));
 
     maailma.lisaa_poistettava(kopio);
 }

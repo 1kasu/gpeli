@@ -130,6 +130,6 @@ impl Aly for SeurausAly {
     }
     
     fn box_clone(&self) -> Box<Aly> {
-        Box::new((*self).clone())
+        Box::new(*self)
     }
 }
