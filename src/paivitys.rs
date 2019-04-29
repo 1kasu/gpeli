@@ -4,7 +4,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use std::time::Duration;
 
-use crate::animointi::{KatoamisAnimaatio, Kuolevainen};
+use crate::animointi::{AmmusAnimaatio, KatoamisAnimaatio, Kuolevainen};
 use crate::fysiikka::{Fysiikallinen, Fysiikka, Fysiikkakappale, Tormaystiedot, Tormaystieto};
 use crate::maailma::kappale::Tagi::*;
 use crate::maailma::kappale::{Kappale, Muoto, Tagi};
@@ -457,8 +457,21 @@ impl<'a> Tormaystoiminta for YleinenTormays<'a> {
 /// * `maailma` - Maailma, jossa törmäysta pahtui
 fn tuhoa_tormaaja(tormays: &Tormaystieto, maailma: &mut Perusmaailma) {
     let f_kappale = &maailma.fysiikalliset()[tormays.indeksi];
+    let suunta = f_kappale.anna_nopeus().yksikkovektori();
     //println!("Yritetään poistaa ammus");
     let kopio = f_kappale.anna_kappale();
+
+    let animaation_kesto = Duration::new(0, 100_000_000);
+    maailma.animaatiot.lisaa_animaatio(Kuolevainen::new(
+        Box::new(AmmusAnimaatio::new(
+            kopio.borrow().keskipisteen_sijainti(),
+            maailma.kokonais_peliaika,
+            suunta,
+            animaation_kesto,
+            Color::RGB(200, 0, 100),
+        )),
+        maailma.kokonais_peliaika + animaation_kesto,
+    ));
 
     maailma.lisaa_poistettava(kopio);
 }
@@ -468,7 +481,7 @@ fn animaatio_tuhoutuminen(tormays: &Tormaystieto, maailma: &mut Perusmaailma) {
     //println!("Yritetään poistaa ammus");
     let kopio = f_kappale.anna_kappale();
 
-    let animaation_kesto = Duration::new(1,0);
+    let animaation_kesto = Duration::new(1, 0);
     maailma.animaatiot.lisaa_animaatio(Kuolevainen::new(
         Box::new(KatoamisAnimaatio::new(
             kopio.borrow().keskipisteen_sijainti(),

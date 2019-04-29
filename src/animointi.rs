@@ -142,7 +142,7 @@ impl Animaatio for KatoamisAnimaatio {
     fn anna_palat(&self, palat: &mut Vec<PiirrettavaKappale>, framen_aika: &Duration) {
         let frame_sekunteina = framen_aika.as_micros() as f32 / 1_000_000 as f32;
         let muutoksen_kesto_sekunteina = self.muutoksen_kesto.as_micros() as f32 / 1_000_000 as f32;
-        let koko = anna_lineaarinen_interpolaatio(
+        let koko = lineaarinen_interpolaatio(
             0.0,
             self.alkukoko,
             muutoksen_kesto_sekunteina,
@@ -223,27 +223,32 @@ impl Animaatio for AmmusAnimaatio {
     fn anna_palat(&self, palat: &mut Vec<PiirrettavaKappale>, framen_aika: &Duration) {
         let frame_sekunteina = framen_aika.as_micros() as f32 / 1_000_000 as f32;
         let muutoksen_kesto_sekunteina = self.muutoksen_kesto.as_micros() as f32 / 1_000_000 as f32;
-        /*
-        let koko = anna_lineaarinen_interpolaatio(
+
+        let paatos_sijainti = self.sijainti + self.suunta * 20.0;
+
+        let sijainti = lineaarinen_interpolaatio(
             0.0,
-            self.alkukoko,
+            self.sijainti,
             muutoksen_kesto_sekunteina,
-            self.loppukoko,
+            paatos_sijainti,
             frame_sekunteina,
         );
-        //println!("{:?} {:?}", koko, frame_sekunteina);
+
+        let koko =
+            lineaarinen_interpolaatio(0.0, 10.0, muutoksen_kesto_sekunteina, 0.1, frame_sekunteina);
+
         let a = PiirrettavaKappale::new(
             Rc::new(RefCell::new(Kappale::new_keskipisteella(
                 Nelio(koko, koko),
-                self.sijainti.x,
-                self.sijainti.y,
+                sijainti.x,
+                sijainti.y,
                 Partikkeli,
             ))),
             Piirtotapa::Yksivarinen {
                 vari: self.kappaleen_vari,
             },
         );
-        palat.push(a);*/
+        palat.push(a);
     }
 
     /// Antaa animaation aloitushetken esittäen sen pelin käynnistymisestä kuluneessa ajasta eli kuinka
@@ -293,7 +298,7 @@ impl<T> Deref for Kuolevainen<T> {
 use std::ops::{Add, Mul, Sub};
 /// Antaa lineaarisen interpolaation kahden pisteen välillä annetulla
 /// interpolaatio arvolla
-pub fn anna_lineaarinen_interpolaatio<T>(
+pub fn lineaarinen_interpolaatio<T>(
     alku_x: f32,
     alku_y: T,
     loppu_x: f32,
