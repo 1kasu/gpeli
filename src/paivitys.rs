@@ -4,8 +4,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use std::time::Duration;
 
-use crate::animointi::Animaatio;
-use crate::animointi::Kuolevainen;
+use crate::animointi::{KatoamisAnimaatio, Kuolevainen};
 use crate::fysiikka::{Fysiikallinen, Fysiikka, Fysiikkakappale, Tormaystiedot, Tormaystieto};
 use crate::maailma::kappale::Tagi::*;
 use crate::maailma::kappale::{Kappale, Muoto, Tagi};
@@ -469,12 +468,17 @@ fn animaatio_tuhoutuminen(tormays: &Tormaystieto, maailma: &mut Perusmaailma) {
     //println!("Yritetään poistaa ammus");
     let kopio = f_kappale.anna_kappale();
 
+    let animaation_kesto = Duration::new(1,0);
     maailma.animaatiot.lisaa_animaatio(Kuolevainen::new(
-        Animaatio::new(
+        Box::new(KatoamisAnimaatio::new(
             kopio.borrow().keskipisteen_sijainti(),
             maailma.kokonais_peliaika,
-        ),
-        maailma.kokonais_peliaika + std::time::Duration::new(1, 0),
+            kopio.borrow().muoto.koko().0,
+            1.0,
+            animaation_kesto,
+            Color::RGB(200, 0, 100),
+        )),
+        maailma.kokonais_peliaika + animaation_kesto,
     ));
 
     maailma.lisaa_poistettava(kopio);
