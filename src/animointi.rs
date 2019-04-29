@@ -171,6 +171,88 @@ impl Animaatio for KatoamisAnimaatio {
     }
 }
 
+/// Animaation ammusten tuhoutumiselle
+pub struct AmmusAnimaatio {
+    /// Animaation alkuhetki
+    animaation_alku: Peliaika,
+    /// Animaation sijainti
+    sijainti: Vektori,
+    /// Animaation suunta
+    suunta: Vektori,
+    /// Kuinka kauan kestää saavuttaa loppukoko
+    muutoksen_kesto: Duration,
+    /// Kappaleen vari
+    kappaleen_vari: Color,
+}
+
+impl AmmusAnimaatio {
+    /// Luo uuden katoamisanimaation annetuilla parametreillä
+    /// # Arguments
+    /// * `sijainti` - Animaation sijainti
+    /// * `animaation_alku` - Animaation alun ajankohta
+    /// * `suunta` - Animaation suunta
+    /// * `muutoksen_kesto` - Muutoksen varattu aika
+    /// * `kappaleen_vari` - Animoitavan kappaleen vari
+    pub fn new(
+        sijainti: Vektori,
+        animaation_alku: Peliaika,
+        suunta: Vektori,
+        muutoksen_kesto: Duration,
+        kappaleen_vari: Color,
+    ) -> Self {
+        AmmusAnimaatio {
+            animaation_alku: animaation_alku,
+            sijainti: sijainti,
+            suunta: suunta,
+            muutoksen_kesto: muutoksen_kesto,
+            kappaleen_vari: kappaleen_vari,
+        }
+    }
+
+    /// Antaa animaation sijainnin
+    pub fn sijainti_mut(&mut self) -> &mut Vektori {
+        &mut self.sijainti
+    }
+}
+
+impl Animaatio for AmmusAnimaatio {
+    /// Lisää annettuun listaan kaikki animaation muodostamat kappaleet
+    /// # Arguments
+    /// * `palat` - Lista, johon animaation luomat kappaleet lisätään
+    /// * `framen_aika` - Ajanhetki animaation alusta, josta muodostetaan kuva
+    fn anna_palat(&self, palat: &mut Vec<PiirrettavaKappale>, framen_aika: &Duration) {
+        let frame_sekunteina = framen_aika.as_micros() as f32 / 1_000_000 as f32;
+        let muutoksen_kesto_sekunteina = self.muutoksen_kesto.as_micros() as f32 / 1_000_000 as f32;
+        /*
+        let koko = anna_lineaarinen_interpolaatio(
+            0.0,
+            self.alkukoko,
+            muutoksen_kesto_sekunteina,
+            self.loppukoko,
+            frame_sekunteina,
+        );
+        //println!("{:?} {:?}", koko, frame_sekunteina);
+        let a = PiirrettavaKappale::new(
+            Rc::new(RefCell::new(Kappale::new_keskipisteella(
+                Nelio(koko, koko),
+                self.sijainti.x,
+                self.sijainti.y,
+                Partikkeli,
+            ))),
+            Piirtotapa::Yksivarinen {
+                vari: self.kappaleen_vari,
+            },
+        );
+        palat.push(a);*/
+    }
+
+    /// Antaa animaation aloitushetken esittäen sen pelin käynnistymisestä kuluneessa ajasta eli kuinka
+    /// paljon aikaa on kulunut pelin käynnistymisestä.
+    fn animaation_alku(&self) -> &Peliaika {
+        &self.animaation_alku
+    }
+}
+
 /// Sisältää jotakin joka kuolee, annettuna ajanhetkenä.
 /// Ei huolehdi itse sisällön poistamisesta, mutta siltä voidaan kysyä tarvitseeko kohde jo poistaa.
 pub struct Kuolevainen<T> {
@@ -208,14 +290,18 @@ impl<T> Deref for Kuolevainen<T> {
     }
 }
 
+use std::ops::{Add, Mul, Sub};
 /// Antaa lineaarisen interpolaation kahden pisteen välillä annetulla
 /// interpolaatio arvolla
-pub fn anna_lineaarinen_interpolaatio(
+pub fn anna_lineaarinen_interpolaatio<T>(
     alku_x: f32,
-    alku_y: f32,
+    alku_y: T,
     loppu_x: f32,
-    loppu_y: f32,
+    loppu_y: T,
     interpolaatio_arvo: f32,
-) -> f32 {
-    alku_y + (interpolaatio_arvo - alku_x) * (loppu_y - alku_y) / (loppu_x - alku_x)
+) -> T
+where
+    T: Add<Output = T> + Sub<Output = T> + Mul<f32, Output = T> + Copy,
+{
+    alku_y + (loppu_y - alku_y) * ((interpolaatio_arvo - alku_x) / (loppu_x - alku_x))
 }
