@@ -17,6 +17,7 @@ pub mod tekoaly;
 use crate::paivitys::*;
 use crate::piirtaja::*;
 use crate::silmukka::perussilmukka::Perussilmukka;
+use crate::silmukka::saannollinensilmukka::SaannollinenSilmukka;
 use crate::silmukka::Paasilmukka;
 
 fn main() -> Result<(), String> {
@@ -60,6 +61,23 @@ fn main() -> Result<(), String> {
     let texture = texture_creator.load_texture("ympyra.png")?;
     piirtaja.lisaa_tekstuuri(texture, "ammus".to_string());
 
-    let mut silmukka = Perussilmukka::new(events, sdl_context, &mut piirtaja, &mut paivitys);
+    let mut silmukka: Box<Paasilmukka> = match 2 {
+        1 => Box::new(Perussilmukka::new(
+            events,
+            sdl_context,
+            &mut piirtaja,
+            &mut paivitys,
+        )),
+        2 => Box::new(SaannollinenSilmukka::new(
+            events,
+            sdl_context,
+            &mut piirtaja,
+            &mut paivitys,
+            60, // Kuinka monta kertaa sekunnissa päivitetään
+        )),
+        //
+        _ => unreachable!(),
+    };
+    println!("{}", silmukka);
     silmukka.kaynnista_silmukka()
 }
