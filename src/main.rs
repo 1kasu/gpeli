@@ -13,9 +13,16 @@ pub mod silmukka;
 pub mod spawneri;
 pub mod syotteet;
 pub mod tekoaly;
+pub mod tormays;
 
-use crate::paivitys::*;
-use crate::piirtaja::*;
+mod peli;
+
+use crate::paivitys::{Paivitys, YhdistettyPaivitys};
+use crate::peli::pelihahmonpaivitys::PelihahmonPaivitys;
+use crate::peli::pelinpaivitys::{
+    AnimaatioidenPaivitys, FysiikanPaivitys, PeliAjanPaivitys, SpawnerinPaivitys, TekoalynPaivitys,
+};
+use crate::piirtaja::{Peruspiirtaja, Piirtaja};
 use crate::silmukka::perussilmukka::Perussilmukka;
 use crate::silmukka::saannollinensilmukka::SaannollinenSilmukka;
 use crate::silmukka::Paasilmukka;
@@ -46,7 +53,6 @@ fn main() -> Result<(), String> {
     let texture_creator = canvas.texture_creator();
     let events = sdl_context.event_pump()?;
     let mut piirtaja = Peruspiirtaja::new(canvas)?;
-    let mut paivitys = Peruspaivitys::new();
 
     let seuraus = (0.2, 0.2);
     let zoomi = 1.0;
@@ -61,20 +67,48 @@ fn main() -> Result<(), String> {
     let texture = texture_creator.load_texture("ympyra.png")?;
     piirtaja.lisaa_tekstuuri(texture, "ammus".to_string());
 
+    let ajan_paivitys: &mut Paivitys = &mut PeliAjanPaivitys;
+    let animaatioiden_paivitys: &mut Paivitys = &mut AnimaatioidenPaivitys;
+    let fysiikan_paivitys: &mut Paivitys = &mut FysiikanPaivitys;
+    let spawnerin_paivitys: &mut Paivitys = &mut SpawnerinPaivitys::new();
+    let tekoalyn_paivitys: &mut Paivitys = &mut TekoalynPaivitys;
+    let pelihahmon_paivitys: &mut Paivitys = &mut PelihahmonPaivitys;
+
+    let mut paivitys: YhdistettyPaivitys;
     let mut silmukka: Box<Paasilmukka> = match 2 {
-        1 => Box::new(Perussilmukka::new(
-            events,
-            sdl_context,
-            &mut piirtaja,
-            &mut paivitys,
-        )),
-        2 => Box::new(SaannollinenSilmukka::new(
-            events,
-            sdl_context,
-            &mut piirtaja,
-            &mut paivitys,
-            60, // Kuinka monta kertaa sekunnissa päivitetään
-        )),
+        1 => {
+            paivitys = YhdistettyPaivitys::new(vec![
+                ajan_paivitys,
+                spawnerin_paivitys,
+                tekoalyn_paivitys,
+                pelihahmon_paivitys,
+                fysiikan_paivitys,
+                animaatioiden_paivitys,
+            ]);
+            Box::new(Perussilmukka::new(
+                events,
+                sdl_context,
+                &mut piirtaja,
+                &mut paivitys,
+            ))
+        }
+        2 => {
+            paivitys = YhdistettyPaivitys::new(vec![
+                ajan_paivitys,
+                spawnerin_paivitys,
+                tekoalyn_paivitys,
+                pelihahmon_paivitys,
+                fysiikan_paivitys,
+                animaatioiden_paivitys,
+            ]);
+            Box::new(SaannollinenSilmukka::new(
+                events,
+                sdl_context,
+                &mut piirtaja,
+                &mut paivitys,
+                60, // Kuinka monta kertaa sekunnissa päivitetään
+            ))
+        }
         //
         _ => unreachable!(),
     };
