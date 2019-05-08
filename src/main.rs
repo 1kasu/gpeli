@@ -20,7 +20,7 @@ mod peli;
 use crate::paivitys::{Paivitys, YhdistettyPaivitys};
 use crate::peli::pelihahmonpaivitys::PelihahmonPaivitys;
 use crate::peli::pelinpaivitys::{
-    AnimaatioidenPaivitys, FysiikanPaivitys, PeliAjanPaivitys, SpawnerinPaivitys, TekoalynPaivitys,
+    AnimaatioidenPaivitys, FysiikanPaivitys, SpawnerinPaivitys, TekoalynPaivitys,
 };
 use crate::piirtaja::{Peruspiirtaja, Piirtaja};
 use crate::silmukka::erillisetpaivityksetsilmukka::ErillisetPaivityksetSilmukka;
@@ -68,7 +68,6 @@ fn main() -> Result<(), String> {
     let texture = texture_creator.load_texture("ympyra.png")?;
     piirtaja.lisaa_tekstuuri(texture, "ammus".to_string());
 
-    let ajan_paivitys: &mut Paivitys = &mut PeliAjanPaivitys;
     let animaatioiden_paivitys: &mut Paivitys = &mut AnimaatioidenPaivitys;
     let fysiikan_paivitys: &mut Paivitys = &mut FysiikanPaivitys;
     let spawnerin_paivitys: &mut Paivitys = &mut SpawnerinPaivitys::new();
@@ -80,7 +79,6 @@ fn main() -> Result<(), String> {
     let mut silmukka: Box<Paasilmukka> = match 3 {
         1 => {
             epasaannollinen_paivitys = YhdistettyPaivitys::new(vec![
-                ajan_paivitys,
                 spawnerin_paivitys,
                 tekoalyn_paivitys,
                 pelihahmon_paivitys,
@@ -96,7 +94,6 @@ fn main() -> Result<(), String> {
         }
         2 => {
             saannollinen_paivitys = YhdistettyPaivitys::new(vec![
-                ajan_paivitys,
                 spawnerin_paivitys,
                 tekoalyn_paivitys,
                 pelihahmon_paivitys,
@@ -117,18 +114,15 @@ fn main() -> Result<(), String> {
                 tekoalyn_paivitys,
                 fysiikan_paivitys,
             ]);
-            epasaannollinen_paivitys = YhdistettyPaivitys::new(vec![
-                ajan_paivitys,
-                pelihahmon_paivitys,
-                animaatioiden_paivitys,
-            ]);
+            epasaannollinen_paivitys =
+                YhdistettyPaivitys::new(vec![pelihahmon_paivitys, animaatioiden_paivitys]);
             Box::new(ErillisetPaivityksetSilmukka::new(
                 events,
                 sdl_context,
                 &mut piirtaja,
                 &mut saannollinen_paivitys,
                 &mut epasaannollinen_paivitys,
-                60, // Kuinka monta kertaa sekunnissa päivitetään
+                60, // Kuinka monta kertaa sekunnissa päivitetään. Ilmeisesti itselläni on vielä 10_000 toimiva...
             ))
         }
         //

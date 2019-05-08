@@ -64,6 +64,8 @@ impl<'a> Paasilmukka for ErillisetPaivityksetSilmukka<'a> {
     fn kaynnista_silmukka(&mut self) -> Result<(), String> {
         let mut _timer = self.context.timer()?;
         let mut peliaika = Instant::now();
+        let mut kokonaisaika_pelin_alusta = Duration::new(0, 0);
+        let mut kokonaisaika_pelin_alusta_saannollinen = Duration::new(0, 0);
         let mut vanha_peliaika = peliaika;
         // Kuinka kauan aikaa ennen kuin seuraava säännöllinen päivitys tehdään
         let mut aikaa_seuraavaan_saannolliseen_paivitykseen = self.paivitysvali;
@@ -91,6 +93,7 @@ impl<'a> Paasilmukka for ErillisetPaivityksetSilmukka<'a> {
             // Lasketaan paivitysaika
             peliaika = Instant::now();
             paivitysaika = peliaika.duration_since(vanha_peliaika);
+            kokonaisaika_pelin_alusta += paivitysaika;
             aikaa_seuraavaan_saannolliseen_paivitykseen += paivitysaika;
             vanha_peliaika = peliaika;
 
@@ -99,19 +102,23 @@ impl<'a> Paasilmukka for ErillisetPaivityksetSilmukka<'a> {
 
             // Toteutetaan niin, monta säännöllistä päivitystä, kuin mitä ollaan jääty jälkeen
             while aikaa_seuraavaan_saannolliseen_paivitykseen >= self.paivitysvali {
+                kokonaisaika_pelin_alusta_saannollinen += self.paivitysvali;
                 // Suoritetaan säännöllinen päivitys
                 self.saannollinen_paivitys.paivita(
                     &mut maailma,
                     &mut self.syotteet,
-                    &self.paivitysvali,
+                    &Paivitysaika::new(&self.paivitysvali, &kokonaisaika_pelin_alusta_saannollinen),
                 );
 
                 aikaa_seuraavaan_saannolliseen_paivitykseen -= self.paivitysvali;
             }
 
             // Tehdään epäsäännöllinen päivitys
-            self.epasaannollinen_paivitys
-                .paivita(&mut maailma, &mut self.syotteet, &paivitysaika);
+            self.epasaannollinen_paivitys.paivita(
+                &mut maailma,
+                &mut self.syotteet,
+                &Paivitysaika::new(&paivitysaika, &kokonaisaika_pelin_alusta),
+            );
 
             maailma.poista_poistettavat();
 

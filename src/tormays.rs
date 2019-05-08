@@ -1,6 +1,7 @@
 use crate::fysiikka::Tormaystieto;
 use crate::maailma::kappale::Tagi;
 use crate::maailma::*;
+use crate::paivitys::Paivitysaika;
 
 /// Törmäystoiminta, joka tehdään, jos törmääjällä on oikea tägi.
 pub trait Tormaystoiminta {
@@ -10,7 +11,8 @@ pub trait Tormaystoiminta {
     /// # Arguments
     /// * `tormays` - Törmäyksen tiedot
     /// * `maailma` - Pelimaailma, jossa törmäys tapahtuu
-    fn toiminta(&self, tormays: &Tormaystieto, maailma: &mut Perusmaailma);
+    /// * `paivitysaika` - Päivitysaika
+    fn toiminta(&self, tormays: &Tormaystieto, maailma: &mut Perusmaailma, paivitysaika: &Paivitysaika);
 }
 
 /// Törmäys tapahtuma, jolle voidaan asettaa ehdoksi törmääjän mahdolliset tägit
@@ -22,7 +24,7 @@ pub struct YleinenTormays<'a> {
     /// Törmätyn tägit
     kohteen_tagit: Vec<Tagi>,
     /// Tapahtuma, jota kutsutaan, jos ehdot toteutuvat
-    tapahtuma: &'a Fn(&Tormaystieto, &mut Perusmaailma),
+    tapahtuma: &'a Fn(&Tormaystieto, &mut Perusmaailma, &Paivitysaika),
 }
 
 impl<'a> YleinenTormays<'a> {
@@ -34,7 +36,7 @@ impl<'a> YleinenTormays<'a> {
     pub fn new(
         omat_tagit: Vec<Tagi>,
         kohteiden_tagit: Vec<Tagi>,
-        tapahtuma: &'a Fn(&Tormaystieto, &mut Perusmaailma),
+        tapahtuma: &'a Fn(&Tormaystieto, &mut Perusmaailma, &Paivitysaika),
     ) -> Self {
         YleinenTormays {
             omat_tagit: omat_tagit,
@@ -55,7 +57,8 @@ impl<'a> Tormaystoiminta for YleinenTormays<'a> {
     /// # Arguments
     /// * `tormays` - Törmäyksen tiedot
     /// * `maailma` - Pelimaailma, jossa törmäys tapahtuu
-    fn toiminta(&self, tormays: &Tormaystieto, maailma: &mut Perusmaailma) {
+    /// * `paivitysaika` - Päivitysaika
+    fn toiminta(&self, tormays: &Tormaystieto, maailma: &mut Perusmaailma, paivitysaika: &Paivitysaika) {
         // Katstaan onko mikään törmätyn kohteen tageista haluttujen joukossa
         if self
             .kohteen_tagit
@@ -64,7 +67,7 @@ impl<'a> Tormaystoiminta for YleinenTormays<'a> {
             .next()
             .is_some()
         {
-            (self.tapahtuma)(tormays, maailma);
+            (self.tapahtuma)(tormays, maailma, paivitysaika);
         }
     }
 }

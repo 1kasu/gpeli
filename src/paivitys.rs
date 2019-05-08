@@ -26,8 +26,26 @@ pub trait Paivitys {
         &mut self,
         maailma: &mut Perusmaailma,
         syotteet: &mut Syotteet,
-        paivitys_aika: &Duration,
+        paivitys_aika: &Paivitysaika,
     );
+}
+
+/// Sisältää tiedon kuinka paljon peliä päivitetään ja kuinka paljon aikaa on kulunut pelin alusta
+pub struct Paivitysaika<'a>{
+    /// Kuinka paljon peliä päivitetään
+    pub paivitysaika: &'a Duration,
+    /// Kuinka paljona aikaa on kulunut pelin alusta
+    pub kokonais_pelin_aika: &'a Duration
+}
+
+impl<'a> Paivitysaika<'a>{
+    /// Luo uuden päivitysaika otuksen
+    /// # Arguments
+    /// * `paivitysaika` - Kuinka paljon päivitetään
+    /// * `kokonais_pelin_aika` - Kokonaisaika pelin alusta
+    pub fn new(paivitysaika: &'a Duration, kokonais_pelin_aika: &'a Duration) -> Paivitysaika<'a>{
+        Paivitysaika{paivitysaika: paivitysaika, kokonais_pelin_aika: kokonais_pelin_aika}
+    }
 }
 
 /// Päivitys, joka sisältää useampia eri päivityksiä
@@ -68,7 +86,7 @@ impl<'a> Paivitys for YhdistettyPaivitys<'a> {
         &mut self,
         maailma: &mut Perusmaailma,
         syotteet: &mut Syotteet,
-        paivitys_aika: &Duration,
+        paivitys_aika: &Paivitysaika,
     ) {
         for paivitys in &mut self.paivitykset {
             paivitys.paivita(maailma, syotteet, paivitys_aika);

@@ -57,6 +57,7 @@ impl<'a> Paasilmukka for SaannollinenSilmukka<'a> {
     fn kaynnista_silmukka(&mut self) -> Result<(), String> {
         let mut _timer = self.context.timer()?;
         let mut peliaika = Instant::now();
+        let mut kokonaisaika_pelin_alusta = Duration::new(0, 0);
         let mut vanha_peliaika = peliaika;
         let mut paivitysaika;
 
@@ -93,11 +94,12 @@ impl<'a> Paasilmukka for SaannollinenSilmukka<'a> {
             }
 
             vanha_peliaika = peliaika;
+            kokonaisaika_pelin_alusta += paivitysaika;
 
             self.syotteet.paivita_nappainten_tilat(&self.events);
 
             self.paivitys
-                .paivita(&mut maailma, &mut self.syotteet, &paivitysaika);
+                .paivita(&mut maailma, &mut self.syotteet, &Paivitysaika::new(&paivitysaika, &kokonaisaika_pelin_alusta));
 
             maailma.poista_poistettavat();
 

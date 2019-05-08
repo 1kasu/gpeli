@@ -2,7 +2,7 @@ extern crate sdl2;
 
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 use super::Paasilmukka;
 use crate::maailma::*;
@@ -52,6 +52,7 @@ impl<'a> Paasilmukka for Perussilmukka<'a> {
     fn kaynnista_silmukka(&mut self) -> Result<(), String> {
         let mut _timer = self.context.timer()?;
         let mut peliaika = Instant::now();
+        let mut kokonaisaika_pelin_alusta = Duration::new(0, 0);
         let mut vanha_peliaika = peliaika;
         let mut paivitysaika;
 
@@ -76,12 +77,16 @@ impl<'a> Paasilmukka for Perussilmukka<'a> {
             // Lasketaan paivitysaika
             peliaika = Instant::now();
             paivitysaika = peliaika.duration_since(vanha_peliaika);
+            kokonaisaika_pelin_alusta += paivitysaika;
             vanha_peliaika = peliaika;
 
             self.syotteet.paivita_nappainten_tilat(&self.events);
 
-            self.paivitys
-                .paivita(&mut maailma, &mut self.syotteet, &paivitysaika);
+            self.paivitys.paivita(
+                &mut maailma,
+                &mut self.syotteet,
+                &Paivitysaika::new(&paivitysaika, &kokonaisaika_pelin_alusta),
+            );
 
             maailma.poista_poistettavat();
 
@@ -94,6 +99,9 @@ impl<'a> Paasilmukka for Perussilmukka<'a> {
 
 impl<'a> std::fmt::Display for Perussilmukka<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "Perussilmukka, joka päivittää viime päivityksestä kuluneen ajan mukaan")
+        write!(
+            f,
+            "Perussilmukka, joka päivittää viime päivityksestä kuluneen ajan mukaan"
+        )
     }
 }

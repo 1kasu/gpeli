@@ -1,12 +1,11 @@
 use sdl2::keyboard::Scancode;
-use std::time::Duration;
 
 use super::lisaa_kuvallinen_kappale;
 use super::Nopeus;
 use crate::fysiikka::{Fysiikallinen, Fysiikkakappale};
 use crate::maailma::kappale::{Kappale, Muoto, Tagi::*};
 use crate::maailma::{Lisaosa, LisaosienAntaja, Pelihahmollinen, Perusmaailma};
-use crate::paivitys::Paivitys;
+use crate::paivitys::{Paivitys, Paivitysaika};
 use crate::syotteet::*;
 
 // Vakioita eri asioille
@@ -50,7 +49,7 @@ impl Paivitys for PelihahmonPaivitys {
         &mut self,
         maailma: &mut Perusmaailma,
         syotteet: &mut Syotteet,
-        _paivitysaika: &Duration,
+        _paivitysaika: &Paivitysaika,
     ) {
         if let Some(pelihahmo) = maailma.anna_pelihahmo_mut() {
             let mut x = 0.0;

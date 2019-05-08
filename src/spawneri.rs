@@ -5,6 +5,7 @@ use crate::fysiikka::Fysiikkakappale;
 use crate::maailma::kappale::Kappale;
 use crate::maailma::vektori::Vektori;
 use crate::maailma::Perusmaailma;
+use crate::paivitys::Paivitysaika;
 use crate::piirtaja::{PiirrettavaKappale, Piirtotapa};
 use crate::tekoaly::{Aly, Alyllinen};
 
@@ -52,18 +53,19 @@ impl Spawneri {
     /// Päivittää spawnerin tilaa ja tarvittaessa luo uuden spawnin
     /// # Arguments
     /// * `maailma` - Maailma, johon spawni luodaan
-    /// * `paivitys_aika` - Päivityksessä käytettävä aika
-    pub fn paivita_spawneria(&mut self, maailma: &mut Perusmaailma, paivitys_aika: &Duration) {
-        if self.aikaa_seuraavaan_spawniin <= *paivitys_aika {
+    /// * `paivitysaika` - Päivityksessä käytettävä aika
+    pub fn paivita_spawneria(&mut self, maailma: &mut Perusmaailma, paivitysaika: &Paivitysaika) {
+        if self.aikaa_seuraavaan_spawniin <= *paivitysaika.paivitysaika {
             // Spawnataan kappale
             self.spawnaa(maailma);
-            let ylijaava_aika = *paivitys_aika - self.aikaa_seuraavaan_spawniin;
+            let ylijaama = &(*paivitysaika.paivitysaika - self.aikaa_seuraavaan_spawniin);
+            let ylijaava_aika = &Paivitysaika::new(ylijaama, paivitysaika.kokonais_pelin_aika);
             self.aikaa_seuraavaan_spawniin = self.spawnin_vali;
 
             // Paivitetaan spawnerin aikaa ylijäävällä ajalla rekursiivisesti
-            self.paivita_spawneria(maailma, &ylijaava_aika);
+            self.paivita_spawneria(maailma, ylijaava_aika);
         } else {
-            self.aikaa_seuraavaan_spawniin -= *paivitys_aika;
+            self.aikaa_seuraavaan_spawniin -= *paivitysaika.paivitysaika;
         }
     }
 

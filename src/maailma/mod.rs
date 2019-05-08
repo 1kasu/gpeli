@@ -1,6 +1,5 @@
 use std::cell::RefCell;
 use std::rc::Rc;
-use std::time::Duration;
 
 use crate::animointi::Animaatiot;
 use crate::fysiikka::{Fysiikallinen, Fysiikkakappale};
@@ -31,9 +30,8 @@ pub struct Perusmaailma {
     alylliset: Vec<Alyllinen>,
     /// Poistettavat kappaleet
     poistettavat: Vec<RcKappale>,
-
+    /// Lista kaikista animaatioista
     pub animaatiot: Animaatiot,
-    pub kokonais_peliaika: Duration,
 }
 
 impl Perusmaailma {
@@ -47,7 +45,6 @@ impl Perusmaailma {
             pelihahmo: None,
             poistettavat: Vec::new(),
             animaatiot: Default::default(),
-            kokonais_peliaika: Default::default(),
         }
     }
 

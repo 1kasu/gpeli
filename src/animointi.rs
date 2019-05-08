@@ -10,6 +10,7 @@ use crate::maailma::kappale::Kappale;
 use crate::maailma::kappale::Muoto::*;
 use crate::maailma::kappale::Tagi::*;
 use crate::maailma::vektori::Vektori;
+use crate::paivitys::Paivitysaika;
 use crate::piirtaja::{PiirrettavaKappale, PiirrettavaMaailma, Piirtotapa};
 
 type Peliaika = Duration;
@@ -45,11 +46,15 @@ impl Animaatiot {
     /// Tarvittaessa myös tuhoaa kaikki vanhentuneet animaatiot.
     /// # Arguments
     /// * `pelimaailman_aika` - Kokonaisaika, joka on kulunut pelin alusta alkaen
-    pub fn paivita_animaatiot(&mut self, pelimaailman_aika: &Peliaika) {
+    pub fn paivita_animaatiot(&mut self, pelimaailman_aika: &Paivitysaika) {
         self.piirrettavat_kappaleet = Default::default();
-        self.animaatiot.retain(|x| !x.kuoleeko(pelimaailman_aika));
+        self.animaatiot
+            .retain(|x| !x.kuoleeko(pelimaailman_aika.kokonais_pelin_aika));
         for a in &mut self.animaatiot {
-            if let Some(aika) = pelimaailman_aika.checked_sub(*a.animaation_alku()) {
+            if let Some(aika) = pelimaailman_aika
+                .kokonais_pelin_aika
+                .checked_sub(*a.animaation_alku())
+            {
                 a.anna_palat(&mut self.piirrettavat_kappaleet, &aika);
             }
         }

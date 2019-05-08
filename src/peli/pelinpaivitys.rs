@@ -8,7 +8,7 @@ use crate::maailma::kappale::{Kappale, Muoto, Tagi::*};
 use crate::maailma::pelihahmo::Pelihahmo;
 use crate::maailma::vektori::Vektori;
 use crate::maailma::*;
-use crate::paivitys::Paivitys;
+use crate::paivitys::{Paivitys, Paivitysaika};
 use crate::piirtaja::Piirtotapa;
 use crate::spawneri::Spawneri;
 use crate::syotteet::*;
@@ -69,7 +69,7 @@ impl Paivitys for SpawnerinPaivitys {
         &mut self,
         maailma: &mut Perusmaailma,
         _syotteet: &mut Syotteet,
-        paivitysaika: &Duration,
+        paivitysaika: &Paivitysaika,
     ) {
         for spawneri in &mut self.spawnerit {
             spawneri.paivita_spawneria(maailma, paivitysaika);
@@ -77,15 +77,81 @@ impl Paivitys for SpawnerinPaivitys {
     }
 }
 
-/// Päivittää pelimaailman aikaa
-pub struct PeliAjanPaivitys;
+/// Päivittää maailmassa olevia tekoälyjä
+pub struct TekoalynPaivitys;
 
-impl Paivitys for PeliAjanPaivitys {
+impl Paivitys for TekoalynPaivitys {
     /// Alustaa pelin
     /// # Arguments
     /// * `maailma` - Pelimaailma, joka alustetaan
     /// * `syotteet` - Alustettavat syotteet
     /// * `events` - Sdl:n osa, jolta voidaan kysyä tapahtumia kuten näppäinten painalluksia
+    fn alusta(
+        &mut self,
+        _maailma: &mut Perusmaailma,
+        _syotteet: &mut Syotteet,
+        _events: &sdl2::EventPump,
+    ) {
+
+    }
+
+    /// Päivittää annetun pelimaailman tilan annetuilla syötteillä ja päivitysajalla
+    /// # Arguments
+    /// * `maailma` - Pelimaailma, jonka tila päivitetään
+    /// * `_syotteet` - Päivityksessä käytettävät syötteet
+    /// * `_paivitysaika` - Aika, jonka verran pelimaailmaa paivitetaan
+    fn paivita(
+        &mut self,
+        maailma: &mut Perusmaailma,
+        _syotteet: &mut Syotteet,
+        _paivitysaika: &Paivitysaika,
+    ) {
+        maailma.laske_tekoalyt();
+    }
+}
+
+/// Pelin animaatioiden päivitys
+pub struct AnimaatioidenPaivitys;
+
+impl Paivitys for AnimaatioidenPaivitys {
+    /// Alustaa pelin
+    /// # Arguments
+    /// * `_maailma` - Pelimaailma, joka alustetaan
+    /// * `_syotteet` - Alustettavat syotteet
+    /// * `_events` - Sdl:n osa, jolta voidaan kysyä tapahtumia kuten näppäinten painalluksia
+    fn alusta(
+        &mut self,
+        _maailma: &mut Perusmaailma,
+        _syotteet: &mut Syotteet,
+        _events: &sdl2::EventPump,
+    ) {
+
+    }
+
+    /// Päivittää annetun pelimaailman tilan annetuilla syötteillä ja päivitysajalla
+    /// # Arguments
+    /// * `maailma` - Pelimaailma, jonka tila päivitetään
+    /// * `_syotteet` - Päivityksessä käytettävät syötteet
+    /// * `_paivitysaika` - Aika, jonka verran pelimaailmaa paivitetaan
+    fn paivita(
+        &mut self,
+        maailma: &mut Perusmaailma,
+        _syotteet: &mut Syotteet,
+        paivitysaika: &Paivitysaika,
+    ) {
+        maailma.animaatiot.paivita_animaatiot(paivitysaika);
+    }
+}
+
+/// Pelin fysiikan päivitys ja törmäyskäsittely
+pub struct FysiikanPaivitys;
+
+impl Paivitys for FysiikanPaivitys {
+    /// Alustaa pelin
+    /// # Arguments
+    /// * `_maailma` - Pelimaailma, joka alustetaan
+    /// * `_syotteet` - Alustettavat syotteet
+    /// * `_events` - Sdl:n osa, jolta voidaan kysyä tapahtumia kuten näppäinten painalluksia
     fn alusta(
         &mut self,
         maailma: &mut Perusmaailma,
@@ -168,126 +234,29 @@ impl Paivitys for PeliAjanPaivitys {
     /// Päivittää annetun pelimaailman tilan annetuilla syötteillä ja päivitysajalla
     /// # Arguments
     /// * `maailma` - Pelimaailma, jonka tila päivitetään
-    /// * `_syotteet` - Päivityksessä käytettävät syötteet
-    /// * `_paivitysaika` - Aika, jonka verran pelimaailmaa paivitetaan
-    fn paivita(
-        &mut self,
-        maailma: &mut Perusmaailma,
-        _syotteet: &mut Syotteet,
-        paivitysaika: &Duration,
-    ) {
-        maailma.kokonais_peliaika += *paivitysaika;
-    }
-}
-
-/// Päivittää maailmassa olevia tekoälyjä
-pub struct TekoalynPaivitys;
-
-impl Paivitys for TekoalynPaivitys {
-    /// Alustaa pelin
-    /// # Arguments
-    /// * `maailma` - Pelimaailma, joka alustetaan
-    /// * `syotteet` - Alustettavat syotteet
-    /// * `events` - Sdl:n osa, jolta voidaan kysyä tapahtumia kuten näppäinten painalluksia
-    fn alusta(
-        &mut self,
-        _maailma: &mut Perusmaailma,
-        _syotteet: &mut Syotteet,
-        _events: &sdl2::EventPump,
-    ) {
-
-    }
-
-    /// Päivittää annetun pelimaailman tilan annetuilla syötteillä ja päivitysajalla
-    /// # Arguments
-    /// * `maailma` - Pelimaailma, jonka tila päivitetään
-    /// * `_syotteet` - Päivityksessä käytettävät syötteet
-    /// * `_paivitysaika` - Aika, jonka verran pelimaailmaa paivitetaan
-    fn paivita(
-        &mut self,
-        maailma: &mut Perusmaailma,
-        _syotteet: &mut Syotteet,
-        _paivitysaika: &Duration,
-    ) {
-        maailma.laske_tekoalyt();
-    }
-}
-
-/// Pelin animaatioiden päivitys
-pub struct AnimaatioidenPaivitys;
-
-impl Paivitys for AnimaatioidenPaivitys {
-    /// Alustaa pelin
-    /// # Arguments
-    /// * `_maailma` - Pelimaailma, joka alustetaan
-    /// * `_syotteet` - Alustettavat syotteet
-    /// * `_events` - Sdl:n osa, jolta voidaan kysyä tapahtumia kuten näppäinten painalluksia
-    fn alusta(
-        &mut self,
-        _maailma: &mut Perusmaailma,
-        _syotteet: &mut Syotteet,
-        _events: &sdl2::EventPump,
-    ) {
-
-    }
-
-    /// Päivittää annetun pelimaailman tilan annetuilla syötteillä ja päivitysajalla
-    /// # Arguments
-    /// * `maailma` - Pelimaailma, jonka tila päivitetään
-    /// * `_syotteet` - Päivityksessä käytettävät syötteet
-    /// * `_paivitysaika` - Aika, jonka verran pelimaailmaa paivitetaan
-    fn paivita(
-        &mut self,
-        maailma: &mut Perusmaailma,
-        _syotteet: &mut Syotteet,
-        _paivitysaika: &Duration,
-    ) {
-        maailma
-            .animaatiot
-            .paivita_animaatiot(&maailma.kokonais_peliaika);
-    }
-}
-
-/// Pelin fysiikan päivitys ja törmäyskäsittely
-pub struct FysiikanPaivitys;
-
-impl Paivitys for FysiikanPaivitys {
-    /// Alustaa pelin
-    /// # Arguments
-    /// * `_maailma` - Pelimaailma, joka alustetaan
-    /// * `_syotteet` - Alustettavat syotteet
-    /// * `_events` - Sdl:n osa, jolta voidaan kysyä tapahtumia kuten näppäinten painalluksia
-    fn alusta(
-        &mut self,
-        _maailma: &mut Perusmaailma,
-        _syotteet: &mut Syotteet,
-        _events: &sdl2::EventPump,
-    ) {
-
-    }
-
-    /// Päivittää annetun pelimaailman tilan annetuilla syötteillä ja päivitysajalla
-    /// # Arguments
-    /// * `maailma` - Pelimaailma, jonka tila päivitetään
     /// * `syotteet` - Päivityksessä käytettävät syötteet
     /// * `paivitysaika` - Aika, jonka verran pelimaailmaa paivitetaan
     fn paivita(
         &mut self,
         maailma: &mut Perusmaailma,
         _syotteet: &mut Syotteet,
-        paivitysaika: &Duration,
+        paivitysaika: &Paivitysaika,
     ) {
         let mut fysiikka = Fysiikka::new();
-        fysiikka.laske_uudet_sijainnit(maailma.fysiikalliset(), paivitysaika);
+        fysiikka.laske_uudet_sijainnit(maailma.fysiikalliset(), paivitysaika.paivitysaika);
 
-        TormaystenKasittely::kasittele_tormaykset(fysiikka.tormaykset, maailma);
+        TormaystenKasittely::kasittele_tormaykset(fysiikka.tormaykset, maailma, &paivitysaika);
     }
 }
 
 pub struct TormaystenKasittely;
 
 impl TormaystenKasittely {
-    fn kasittele_tormaykset(tormaykset: Tormaystiedot, maailma: &mut Perusmaailma) {
+    fn kasittele_tormaykset(
+        tormaykset: Tormaystiedot,
+        maailma: &mut Perusmaailma,
+        paivitysaika: &Paivitysaika,
+    ) {
         let mut mahdolliset_tapahtumat = Vec::new();
         mahdolliset_tapahtumat.push(YleinenTormays::new(
             vec![Ammus],
@@ -302,7 +271,7 @@ impl TormaystenKasittely {
         for tormays in tormaykset.anna_tormaykset() {
             for toiminta in &mahdolliset_tapahtumat {
                 if toiminta.ehto(maailma.fysiikalliset()[tormays.indeksi].anna_tagi()) {
-                    toiminta.toiminta(tormays, maailma);
+                    toiminta.toiminta(tormays, maailma, paivitysaika);
                 }
             }
         }
@@ -313,7 +282,8 @@ impl TormaystenKasittely {
 /// # Arguments
 /// * `tormays` - Törmäystapahtuman tiedot
 /// * `maailma` - Maailma, jossa törmäysta pahtui
-fn tuhoa_tormaaja(tormays: &Tormaystieto, maailma: &mut Perusmaailma) {
+/// * `paivitysaika` - Paivitysaika
+fn tuhoa_tormaaja(tormays: &Tormaystieto, maailma: &mut Perusmaailma, paivitysaika: &Paivitysaika) {
     let f_kappale = &maailma.fysiikalliset()[tormays.indeksi];
     let suunta = f_kappale.anna_nopeus().yksikkovektori();
     //println!("Yritetään poistaa ammus");
@@ -323,18 +293,22 @@ fn tuhoa_tormaaja(tormays: &Tormaystieto, maailma: &mut Perusmaailma) {
     maailma.animaatiot.lisaa_animaatio(Kuolevainen::new(
         Box::new(AmmusAnimaatio::new(
             kopio.borrow().keskipisteen_sijainti(),
-            maailma.kokonais_peliaika,
+            *paivitysaika.kokonais_pelin_aika,
             suunta,
             animaation_kesto,
             Color::RGB(200, 0, 100),
         )),
-        maailma.kokonais_peliaika + animaation_kesto,
+        *paivitysaika.kokonais_pelin_aika + animaation_kesto,
     ));
 
     maailma.lisaa_poistettava(kopio);
 }
 
-fn animaatio_tuhoutuminen(tormays: &Tormaystieto, maailma: &mut Perusmaailma) {
+fn animaatio_tuhoutuminen(
+    tormays: &Tormaystieto,
+    maailma: &mut Perusmaailma,
+    paivitysaika: &Paivitysaika,
+) {
     let f_kappale = &maailma.fysiikalliset()[tormays.indeksi];
     //println!("Yritetään poistaa ammus");
     let kopio = f_kappale.anna_kappale();
@@ -343,13 +317,13 @@ fn animaatio_tuhoutuminen(tormays: &Tormaystieto, maailma: &mut Perusmaailma) {
     maailma.animaatiot.lisaa_animaatio(Kuolevainen::new(
         Box::new(KatoamisAnimaatio::new(
             kopio.borrow().keskipisteen_sijainti(),
-            maailma.kokonais_peliaika,
+            *paivitysaika.kokonais_pelin_aika,
             kopio.borrow().muoto.koko().0,
             1.0,
             animaation_kesto,
             Color::RGB(200, 0, 100),
         )),
-        maailma.kokonais_peliaika + animaation_kesto,
+        *paivitysaika.kokonais_pelin_aika + animaation_kesto,
     ));
 
     maailma.lisaa_poistettava(kopio);
