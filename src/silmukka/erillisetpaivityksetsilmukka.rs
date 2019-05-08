@@ -11,6 +11,9 @@ use crate::piirtaja::*;
 use crate::syotteet::*;
 
 /// Pääsilmukka, joka päivittää pelin tilaa säännöllisin väliajoin
+/// Säännöllinen päivitys tehdään niin monta kertaa kuin niitä mahtuu päivitysaikaan.
+/// Esim. jos aikaa on kulunut viimeisestä säännöllisestä päivityksestä 3,6 kertaa päivitysväli,
+/// niin suoritetaan 3 säännöllistä päivitystä.
 pub struct ErillisetPaivityksetSilmukka<'a> {
     /// Tältä voidaan kysellä tapahtumia kuten näppäimen painalluksia
     events: sdl2::EventPump,
@@ -29,7 +32,7 @@ pub struct ErillisetPaivityksetSilmukka<'a> {
 }
 
 impl<'a> ErillisetPaivityksetSilmukka<'a> {
-    /// Luo uuden säännöllisesti päivittyvän silmukan
+    /// Luo uuden silmukan, jolla on sekä säännöllinen, että epäsäännöllinen päivitys
     /// # Arguments
     /// * `events` - Eventpump, jolta saadaan tapahtumat
     /// * `context` - SDL2 konteksti
@@ -62,12 +65,14 @@ impl<'a> Paasilmukka for ErillisetPaivityksetSilmukka<'a> {
         let mut _timer = self.context.timer()?;
         let mut peliaika = Instant::now();
         let mut vanha_peliaika = peliaika;
+        // Kuinka kauan aikaa ennen kuin seuraava säännöllinen päivitys tehdään
+        let mut aikaa_seuraavaan_saannolliseen_paivitykseen = self.paivitysvali;
         let mut paivitysaika;
-
-        let lepoaika = 5;
 
         let mut maailma = Perusmaailma::new();
         self.saannollinen_paivitys
+            .alusta(&mut maailma, &mut self.syotteet, &self.events);
+        self.epasaannollinen_paivitys
             .alusta(&mut maailma, &mut self.syotteet, &self.events);
 
         'paasilmukka: loop {
@@ -86,21 +91,26 @@ impl<'a> Paasilmukka for ErillisetPaivityksetSilmukka<'a> {
             // Lasketaan paivitysaika
             peliaika = Instant::now();
             paivitysaika = peliaika.duration_since(vanha_peliaika);
-
-            if paivitysaika < self.paivitysvali {
-                if (self.paivitysvali - paivitysaika).as_micros() > lepoaika {
-                    _timer.delay(lepoaika as u32);
-                }
-                continue;
-            } else {
-                paivitysaika = self.paivitysvali
-            }
-
+            aikaa_seuraavaan_saannolliseen_paivitykseen += paivitysaika;
             vanha_peliaika = peliaika;
 
+            // Päivitetään syötteet
             self.syotteet.paivita_nappainten_tilat(&self.events);
 
-            self.saannollinen_paivitys
+            // Toteutetaan niin, monta säännöllistä päivitystä, kuin mitä ollaan jääty jälkeen
+            while aikaa_seuraavaan_saannolliseen_paivitykseen >= self.paivitysvali {
+                // Suoritetaan säännöllinen päivitys
+                self.saannollinen_paivitys.paivita(
+                    &mut maailma,
+                    &mut self.syotteet,
+                    &self.paivitysvali,
+                );
+
+                aikaa_seuraavaan_saannolliseen_paivitykseen -= self.paivitysvali;
+            }
+
+            // Tehdään epäsäännöllinen päivitys
+            self.epasaannollinen_paivitys
                 .paivita(&mut maailma, &mut self.syotteet, &paivitysaika);
 
             maailma.poista_poistettavat();

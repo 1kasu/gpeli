@@ -23,6 +23,7 @@ use crate::peli::pelinpaivitys::{
     AnimaatioidenPaivitys, FysiikanPaivitys, PeliAjanPaivitys, SpawnerinPaivitys, TekoalynPaivitys,
 };
 use crate::piirtaja::{Peruspiirtaja, Piirtaja};
+use crate::silmukka::erillisetpaivityksetsilmukka::ErillisetPaivityksetSilmukka;
 use crate::silmukka::perussilmukka::Perussilmukka;
 use crate::silmukka::saannollinensilmukka::SaannollinenSilmukka;
 use crate::silmukka::Paasilmukka;
@@ -74,10 +75,11 @@ fn main() -> Result<(), String> {
     let tekoalyn_paivitys: &mut Paivitys = &mut TekoalynPaivitys;
     let pelihahmon_paivitys: &mut Paivitys = &mut PelihahmonPaivitys;
 
-    let mut paivitys: YhdistettyPaivitys;
-    let mut silmukka: Box<Paasilmukka> = match 2 {
+    let mut epasaannollinen_paivitys: YhdistettyPaivitys;
+    let mut saannollinen_paivitys: YhdistettyPaivitys;
+    let mut silmukka: Box<Paasilmukka> = match 3 {
         1 => {
-            paivitys = YhdistettyPaivitys::new(vec![
+            epasaannollinen_paivitys = YhdistettyPaivitys::new(vec![
                 ajan_paivitys,
                 spawnerin_paivitys,
                 tekoalyn_paivitys,
@@ -89,11 +91,11 @@ fn main() -> Result<(), String> {
                 events,
                 sdl_context,
                 &mut piirtaja,
-                &mut paivitys,
+                &mut epasaannollinen_paivitys,
             ))
         }
         2 => {
-            paivitys = YhdistettyPaivitys::new(vec![
+            saannollinen_paivitys = YhdistettyPaivitys::new(vec![
                 ajan_paivitys,
                 spawnerin_paivitys,
                 tekoalyn_paivitys,
@@ -105,7 +107,27 @@ fn main() -> Result<(), String> {
                 events,
                 sdl_context,
                 &mut piirtaja,
-                &mut paivitys,
+                &mut saannollinen_paivitys,
+                60, // Kuinka monta kertaa sekunnissa päivitetään
+            ))
+        }
+        3 => {
+            saannollinen_paivitys = YhdistettyPaivitys::new(vec![
+                spawnerin_paivitys,
+                tekoalyn_paivitys,
+                fysiikan_paivitys,
+            ]);
+            epasaannollinen_paivitys = YhdistettyPaivitys::new(vec![
+                ajan_paivitys,
+                pelihahmon_paivitys,
+                animaatioiden_paivitys,
+            ]);
+            Box::new(ErillisetPaivityksetSilmukka::new(
+                events,
+                sdl_context,
+                &mut piirtaja,
+                &mut saannollinen_paivitys,
+                &mut epasaannollinen_paivitys,
                 60, // Kuinka monta kertaa sekunnissa päivitetään
             ))
         }

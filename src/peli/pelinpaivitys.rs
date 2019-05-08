@@ -2,7 +2,6 @@ use sdl2::pixels::Color;
 use std::rc::Rc;
 use std::time::Duration;
 
-use super::pelihahmonpaivitys::PelihahmonPaivitys;
 use crate::animointi::{AmmusAnimaatio, KatoamisAnimaatio, Kuolevainen};
 use crate::fysiikka::{Fysiikallinen, Fysiikka, Fysiikkakappale, Tormaystiedot, Tormaystieto};
 use crate::maailma::kappale::{Kappale, Muoto, Tagi::*};
@@ -20,7 +19,6 @@ use super::{lisaa_fysiikka_kappale, lisaa_kappale};
 
 /// Simppeli päivitys, joka huolehtii pelin toiminnasta
 pub struct SpawnerinPaivitys {
-    pelihahmon_paivitys: PelihahmonPaivitys,
     spawnerit: Vec<Spawneri>,
 }
 
@@ -34,7 +32,6 @@ impl SpawnerinPaivitys {
     /// Luo uuden peruspäivityksen
     pub fn new() -> Self {
         SpawnerinPaivitys {
-            pelihahmon_paivitys: PelihahmonPaivitys,
             spawnerit: Default::default(),
         }
     }
@@ -48,9 +45,9 @@ impl Paivitys for SpawnerinPaivitys {
     /// * `events` - Sdl:n osa, jolta voidaan kysyä tapahtumia kuten näppäinten painalluksia
     fn alusta(
         &mut self,
-        maailma: &mut Perusmaailma,
-        syotteet: &mut Syotteet,
-        events: &sdl2::EventPump,
+        _maailma: &mut Perusmaailma,
+        _syotteet: &mut Syotteet,
+        _events: &sdl2::EventPump,
     ) {
         self.spawnerit.push(Spawneri::new(
             Duration::new(5, 0),
@@ -92,8 +89,8 @@ impl Paivitys for PeliAjanPaivitys {
     fn alusta(
         &mut self,
         maailma: &mut Perusmaailma,
-        syotteet: &mut Syotteet,
-        events: &sdl2::EventPump,
+        _syotteet: &mut Syotteet,
+        _events: &sdl2::EventPump,
     ) {
         // Pelihahmo
         let _rk = lisaa_kappale(
