@@ -1,9 +1,7 @@
 //! Sisältää animoinnissa tarvittavia luokkia
 
 use sdl2::pixels::Color;
-use std::cell::RefCell;
 use std::ops::Deref;
-use std::rc::Rc;
 use std::time::Duration;
 
 use crate::maailma::kappale::Kappale;
@@ -11,7 +9,7 @@ use crate::maailma::kappale::Muoto::*;
 use crate::maailma::kappale::Tagi::*;
 use crate::maailma::vektori::Vektori;
 use crate::paivitys::Paivitysaika;
-use crate::piirtaja::{PiirrettavaKappale, PiirrettavaMaailma, Piirtotapa};
+use crate::piirtaja::{Piirtotapa, ValiaikainenPiirrettavaKappale};
 
 type Peliaika = Duration;
 
@@ -22,8 +20,6 @@ type Peliaika = Duration;
 pub struct Animaatiot {
     /// Lista animaatioista sisältäen tiedot kuolinajasta
     animaatiot: Vec<Kuolevainen<Box<Animaatio>>>,
-    /// Piirrettävät kappaleet
-    piirrettavat_kappaleet: Vec<PiirrettavaKappale>,
 }
 
 impl Animaatiot {
@@ -31,7 +27,6 @@ impl Animaatiot {
     pub fn new() -> Self {
         Animaatiot {
             animaatiot: Default::default(),
-            piirrettavat_kappaleet: Default::default(),
         }
     }
 
@@ -45,9 +40,13 @@ impl Animaatiot {
     /// Päivittää kaikkien animaatioiden tilaa luoden tarvittavan graafisen esityksen valmiiksi.
     /// Tarvittaessa myös tuhoaa kaikki vanhentuneet animaatiot.
     /// # Arguments
+    /// * `piirrettavien_lista` - Lista, johon piirrettävät kappaleet lisätään
     /// * `pelimaailman_aika` - Kokonaisaika, joka on kulunut pelin alusta alkaen
-    pub fn paivita_animaatiot(&mut self, pelimaailman_aika: &Paivitysaika) {
-        self.piirrettavat_kappaleet = Default::default();
+    pub fn anna_piirrettavat(
+        &mut self,
+        piirrettavien_lista: &mut Vec<ValiaikainenPiirrettavaKappale>,
+        pelimaailman_aika: &Paivitysaika,
+    ) {
         self.animaatiot
             .retain(|x| !x.kuoleeko(pelimaailman_aika.kokonais_pelin_aika));
         for a in &mut self.animaatiot {
@@ -55,26 +54,9 @@ impl Animaatiot {
                 .kokonais_pelin_aika
                 .checked_sub(*a.animaation_alku())
             {
-                a.anna_palat(&mut self.piirrettavat_kappaleet, &aika);
+                a.anna_palat(piirrettavien_lista, &aika);
             }
         }
-    }
-}
-
-impl PiirrettavaMaailma for Animaatiot {
-    /// Piirrettävät kappaleet maailmassa
-    /// # Arguments
-    /// * `sijainti` - Ilmoittaa mistä päin maailmaa halutaan piirrettävät kappaleet
-    fn piirrettavat<'a>(
-        &'a self,
-        _sijainti: Vektori,
-    ) -> Box<Iterator<Item = &'a PiirrettavaKappale> + 'a> {
-        Box::new(self.piirrettavat_kappaleet.iter())
-    }
-
-    /// Antaa kameran sijainnin pelimaailmassa, jos maailma haluaa ehdottaa jotakin
-    fn anna_kameran_sijainti(&self) -> Option<Vektori> {
-        None
     }
 }
 
@@ -84,7 +66,7 @@ pub trait Animaatio {
     /// # Arguments
     /// * `palat` - Lista, johon animaation luomat kappaleet lisätään
     /// * `framen_aika` - Ajanhetki animaation alusta, josta muodostetaan kuva
-    fn anna_palat(&self, palat: &mut Vec<PiirrettavaKappale>, framen_aika: &Duration);
+    fn anna_palat(&self, palat: &mut Vec<ValiaikainenPiirrettavaKappale>, framen_aika: &Duration);
     /// Antaa animaation aloitushetken esittäen sen pelin käynnistymisestä kuluneessa ajasta eli kuinka
     /// paljon aikaa on kulunut pelin käynnistymisestä.
     fn animaation_alku(&self) -> &Peliaika;
@@ -144,7 +126,7 @@ impl Animaatio for KatoamisAnimaatio {
     /// # Arguments
     /// * `palat` - Lista, johon animaation luomat kappaleet lisätään
     /// * `framen_aika` - Ajanhetki animaation alusta, josta muodostetaan kuva
-    fn anna_palat(&self, palat: &mut Vec<PiirrettavaKappale>, framen_aika: &Duration) {
+    fn anna_palat(&self, palat: &mut Vec<ValiaikainenPiirrettavaKappale>, framen_aika: &Duration) {
         let frame_sekunteina = framen_aika.as_micros() as f32 / 1_000_000 as f32;
         let muutoksen_kesto_sekunteina = self.muutoksen_kesto.as_micros() as f32 / 1_000_000 as f32;
         let koko = lineaarinen_interpolaatio(
@@ -155,17 +137,18 @@ impl Animaatio for KatoamisAnimaatio {
             frame_sekunteina,
         );
         //println!("{:?} {:?}", koko, frame_sekunteina);
-        let a = PiirrettavaKappale::new(
-            Rc::new(RefCell::new(Kappale::new_keskipisteella(
+        let a = ValiaikainenPiirrettavaKappale::new(
+            Kappale::new_keskipisteella(
                 Nelio(koko, koko),
                 self.sijainti.x,
                 self.sijainti.y,
                 Partikkeli,
-            ))),
+            ),
             Piirtotapa::Yksivarinen {
                 vari: self.kappaleen_vari,
             },
         );
+
         palat.push(a);
     }
 
@@ -225,7 +208,7 @@ impl Animaatio for AmmusAnimaatio {
     /// # Arguments
     /// * `palat` - Lista, johon animaation luomat kappaleet lisätään
     /// * `framen_aika` - Ajanhetki animaation alusta, josta muodostetaan kuva
-    fn anna_palat(&self, palat: &mut Vec<PiirrettavaKappale>, framen_aika: &Duration) {
+    fn anna_palat(&self, palat: &mut Vec<ValiaikainenPiirrettavaKappale>, framen_aika: &Duration) {
         let frame_sekunteina = framen_aika.as_micros() as f32 / 1_000_000 as f32;
         let muutoksen_kesto_sekunteina = self.muutoksen_kesto.as_micros() as f32 / 1_000_000 as f32;
 
@@ -242,13 +225,8 @@ impl Animaatio for AmmusAnimaatio {
         let koko =
             lineaarinen_interpolaatio(0.0, 10.0, muutoksen_kesto_sekunteina, 0.1, frame_sekunteina);
 
-        let a = PiirrettavaKappale::new(
-            Rc::new(RefCell::new(Kappale::new_keskipisteella(
-                Nelio(koko, koko),
-                sijainti.x,
-                sijainti.y,
-                Partikkeli,
-            ))),
+        let a = ValiaikainenPiirrettavaKappale::new(
+            Kappale::new_keskipisteella(Nelio(koko, koko), sijainti.x, sijainti.y, Partikkeli),
             Piirtotapa::Yksivarinen {
                 vari: self.kappaleen_vari,
             },

@@ -1,15 +1,17 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use crate::animointi::Animaatiot;
+use crate::animointi::{lineaarinen_interpolaatio, Animaatiot};
 use crate::fysiikka::{Fysiikallinen, Fysiikkakappale};
-use crate::piirtaja::{PiirrettavaKappale, PiirrettavaMaailma};
+use crate::piirtaja::{PiirrettavaKappale, PiirrettavaMaailma, ValiaikainenPiirrettavaKappale};
 use crate::tekoaly::{AlyToiminta, Alyllinen, TekoalyMaailma};
 use kappale::Kappale;
+use kappalemuisti::Kappalemuisti;
 use pelihahmo::Pelihahmo;
 use vektori::Vektori;
 
 pub mod kappale;
+pub mod kappalemuisti;
 pub mod pelihahmo;
 pub mod vektori;
 
@@ -20,6 +22,11 @@ pub type RcKappale = Rc<RefCell<Kappale>>;
 pub struct Perusmaailma {
     /// Pelimaailman sisältämät kappaleet
     kappaleet: Vec<RcKappale>,
+    /// Muistit vanhoista tiloista
+    kappalemuisti: Vec<Kappalemuisti>,
+    /// Jos jotakin, niin interpolointi on käytössä
+    /// Kuvastaa arvoa, jolla seuraava piirtäminen tehdään
+    interpoloinnin_arvo: Option<f32>,
     /// Maailmassa olevat fysiikkakappaleet
     fysiikka_kappaleet: Vec<Fysiikkakappale>,
     /// Piirrettävät kappaleet
@@ -39,6 +46,23 @@ impl Perusmaailma {
     pub fn new() -> Self {
         Perusmaailma {
             kappaleet: Vec::new(),
+            kappalemuisti: Default::default(),
+            interpoloinnin_arvo: None,
+            fysiikka_kappaleet: Vec::new(),
+            piirrettavat_kappaleet: Vec::new(),
+            alylliset: Default::default(),
+            pelihahmo: None,
+            poistettavat: Vec::new(),
+            animaatiot: Default::default(),
+        }
+    }
+
+    /// Luo uuden tyhjän maailman
+    pub fn new_interpoloiva() -> Self {
+        Perusmaailma {
+            kappaleet: Vec::new(),
+            kappalemuisti: Default::default(),
+            interpoloinnin_arvo: Some(0.0),
             fysiikka_kappaleet: Vec::new(),
             piirrettavat_kappaleet: Vec::new(),
             alylliset: Default::default(),
@@ -54,7 +78,22 @@ impl Perusmaailma {
     pub fn lisaa_kappale(&mut self, kappale: Kappale) -> RcKappale {
         let r_kappale = Rc::new(RefCell::new(kappale));
         self.kappaleet.push(Rc::clone(&r_kappale));
+        // Luo kappaleelle muistin, jos interpolointi on käytössä
+        if self.interpoloinnin_arvo.is_some() {
+            self.kappalemuisti
+                .push(Kappalemuisti::new(Rc::clone(&r_kappale)));
+        }
         r_kappale
+    }
+
+    pub fn aseta_interpolaatio_arvo(&mut self, arvo: f32) {
+        self.interpoloinnin_arvo = Some(arvo);
+    }
+
+    pub fn paivita_kappalemuistia(&mut self) {
+        for kappale in &mut self.kappalemuisti {
+            kappale.paivita_muistia();
+        }
     }
 
     /// Lisää annetulle kappaleelle piirrettävyys ominaisuuden
@@ -142,7 +181,11 @@ impl Perusmaailma {
             // Poistaa kappaleen piirrettävistä
             self.piirrettavat_kappaleet
                 .retain(|x| !std::ptr::eq(x.anna_kappale().as_ptr(), poistettava.as_ptr()));
+            // poisttaa tekoälyn
             self.alylliset
+                .retain(|x| !std::ptr::eq(x.anna_kappale().as_ptr(), poistettava.as_ptr()));
+            // poistaa muistin
+            self.kappalemuisti
                 .retain(|x| !std::ptr::eq(x.anna_kappale().as_ptr(), poistettava.as_ptr()));
             // Poistaa kappaleen kappaleista
             self.kappaleet
@@ -152,6 +195,38 @@ impl Perusmaailma {
                 if std::ptr::eq(hahmo.anna_kappale().as_ptr(), poistettava.as_ptr()) {
                     self.pelihahmo = None
                 }
+            }
+        }
+    }
+
+    /// Antaa piirrettävät kappaleet
+    pub fn anna_piirrettavat(&self, lista: &mut Vec<ValiaikainenPiirrettavaKappale>) {
+        if let Some(interpolaatio_arvo) = self.interpoloinnin_arvo {
+            for kappale in &self.kappalemuisti {
+                let (vasen, oikea) = kappale.anna_versiot();
+
+                let interpoloitu_sijainti = lineaarinen_interpolaatio(
+                    0.0,
+                    vasen.kulman_sijainti(),
+                    1.0,
+                    oikea.kulman_sijainti(),
+                    interpolaatio_arvo,
+                );
+                let kappale = ValiaikainenPiirrettavaKappale::new(
+                    Kappale::new_kulmalla(
+                        oikea.muoto,
+                        interpoloitu_sijainti.x,
+                        interpoloitu_sijainti.y,
+                        vasen.tagi,
+                    ),
+                    (self
+                        .anna_piirrettavyys(&kappale.anna_kappale())
+                        .unwrap()
+                        .anna_piirtotapa())
+                    .clone(),
+                );
+
+                lista.push(kappale);
             }
         }
     }
@@ -241,11 +316,7 @@ impl PiirrettavaMaailma for Perusmaailma {
         &'a self,
         _sijainti: Vektori,
     ) -> Box<Iterator<Item = &'a PiirrettavaKappale> + 'a> {
-        Box::new(
-            self.piirrettavat_kappaleet
-                .iter()
-                .chain(self.animaatiot.piirrettavat(_sijainti)),
-        )
+        Box::new(self.piirrettavat_kappaleet.iter())
     }
 
     /// Antaa kameran sijainnin pelimaailmassa, jos maailma haluaa ehdottaa jotakin

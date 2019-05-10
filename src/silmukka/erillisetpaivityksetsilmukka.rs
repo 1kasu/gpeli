@@ -14,13 +14,13 @@ use crate::syotteet::*;
 /// Säännöllinen päivitys tehdään niin monta kertaa kuin niitä mahtuu päivitysaikaan.
 /// Esim. jos aikaa on kulunut viimeisestä säännöllisestä päivityksestä 3,6 kertaa päivitysväli,
 /// niin suoritetaan 3 säännöllistä päivitystä.
-pub struct ErillisetPaivityksetSilmukka<'a> {
+pub struct ErillisetPaivityksetSilmukka<'a, T: MaailmanPiirtaja + ValiaikaistenPiirtaja> {
     /// Tältä voidaan kysellä tapahtumia kuten näppäimen painalluksia
     events: sdl2::EventPump,
     /// Sdl context, jota tarvitaan esim. ajastimien luomisessa
     context: sdl2::Sdl,
     /// Osa, joka vastaa pelitilan esittämisestä käyttäjälle
-    piirtaja: &'a mut Piirtaja,
+    piirtaja: &'a mut T,
     /// Pelin käyttämät syötteet
     syotteet: Syotteet,
     /// Pelin käyttämä säännöllinen päivitys
@@ -31,7 +31,7 @@ pub struct ErillisetPaivityksetSilmukka<'a> {
     paivitysvali: Duration,
 }
 
-impl<'a> ErillisetPaivityksetSilmukka<'a> {
+impl<'a, T: MaailmanPiirtaja + ValiaikaistenPiirtaja> ErillisetPaivityksetSilmukka<'a, T> {
     /// Luo uuden silmukan, jolla on sekä säännöllinen, että epäsäännöllinen päivitys
     /// # Arguments
     /// * `events` - Eventpump, jolta saadaan tapahtumat
@@ -42,7 +42,7 @@ impl<'a> ErillisetPaivityksetSilmukka<'a> {
     pub fn new(
         events: sdl2::EventPump,
         context: sdl2::Sdl,
-        piirtaja: &'a mut Piirtaja,
+        piirtaja: &'a mut T,
         saannollinen_paivitys: &'a mut Paivitys,
         epasaannollinen_paivitys: &'a mut Paivitys,
         paivitys_tiheys: u32,
@@ -59,7 +59,9 @@ impl<'a> ErillisetPaivityksetSilmukka<'a> {
     }
 }
 
-impl<'a> Paasilmukka for ErillisetPaivityksetSilmukka<'a> {
+impl<'a, T: MaailmanPiirtaja + ValiaikaistenPiirtaja> Paasilmukka
+    for ErillisetPaivityksetSilmukka<'a, T>
+{
     /// Käynnistää pääsilmukan ja pyörittää sitä niin kauan kuin se vain pyörii
     fn kaynnista_silmukka(&mut self) -> Result<(), String> {
         let mut _timer = self.context.timer()?;
@@ -122,14 +124,27 @@ impl<'a> Paasilmukka for ErillisetPaivityksetSilmukka<'a> {
 
             maailma.poista_poistettavat();
 
+            self.piirtaja.puhdista_kuva();
+
             self.piirtaja.piirra_maailma(&maailma)?;
+            let mut piirrettavat_kappaleet = Vec::new();
+            maailma.animaatiot.anna_piirrettavat(
+                &mut piirrettavat_kappaleet,
+                &Paivitysaika::new(&paivitysaika, &kokonaisaika_pelin_alusta),
+            );
+
+            self.piirtaja.piirra_kappaleista(&piirrettavat_kappaleet)?;
+
+            self.piirtaja.esita_kuva();
         }
 
         Ok(())
     }
 }
 
-impl<'a> std::fmt::Display for ErillisetPaivityksetSilmukka<'a> {
+impl<'a, T: MaailmanPiirtaja + ValiaikaistenPiirtaja> std::fmt::Display
+    for ErillisetPaivityksetSilmukka<'a, T>
+{
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(
             f,

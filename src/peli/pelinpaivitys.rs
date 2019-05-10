@@ -110,38 +110,6 @@ impl Paivitys for TekoalynPaivitys {
     }
 }
 
-/// Pelin animaatioiden päivitys
-pub struct AnimaatioidenPaivitys;
-
-impl Paivitys for AnimaatioidenPaivitys {
-    /// Alustaa pelin
-    /// # Arguments
-    /// * `_maailma` - Pelimaailma, joka alustetaan
-    /// * `_syotteet` - Alustettavat syotteet
-    /// * `_events` - Sdl:n osa, jolta voidaan kysyä tapahtumia kuten näppäinten painalluksia
-    fn alusta(
-        &mut self,
-        _maailma: &mut Perusmaailma,
-        _syotteet: &mut Syotteet,
-        _events: &sdl2::EventPump,
-    ) {
-
-    }
-
-    /// Päivittää annetun pelimaailman tilan annetuilla syötteillä ja päivitysajalla
-    /// # Arguments
-    /// * `maailma` - Pelimaailma, jonka tila päivitetään
-    /// * `_syotteet` - Päivityksessä käytettävät syötteet
-    /// * `_paivitysaika` - Aika, jonka verran pelimaailmaa paivitetaan
-    fn paivita(
-        &mut self,
-        maailma: &mut Perusmaailma,
-        _syotteet: &mut Syotteet,
-        paivitysaika: &Paivitysaika,
-    ) {
-        maailma.animaatiot.paivita_animaatiot(paivitysaika);
-    }
-}
 
 /// Pelin fysiikan päivitys ja törmäyskäsittely
 pub struct FysiikanPaivitys;

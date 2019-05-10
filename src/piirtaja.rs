@@ -14,11 +14,11 @@ use crate::maailma::vektori::Vektori;
 use crate::maailma::Lisaosa;
 
 /// Huolehtii pelimaailman esittämisestä käyttäjälle.
-pub trait Piirtaja {
-    /// Esittää pelitilan käyttäjälle jollain tavalla.
-    /// # Arguments
-    /// * `maailma` - Esitettävä pelimaailma
-    fn piirra_maailma(&mut self, maailma: &PiirrettavaMaailma) -> Result<(), String>;
+pub trait Piirtovalmius {
+    /// Esittää valmistellun kuvan käyttäjälle
+    fn esita_kuva(&mut self);
+    /// Pyyhkii vanhan kuvan pois
+    fn puhdista_kuva(&mut self);
     /// Asettaa kameran sijainnin
     /// # Arguments
     /// * `kameran_sijainti` - Piirtavan kameran sijainti
@@ -31,6 +31,23 @@ pub trait Piirtaja {
     /// # Arguments
     /// * `etaisyys` - Kuinka paljon kamera voi jäädä jälkeen seurattavasta. Suhteellinen arvo väliltä 0-1. Sisältää x ja y koordinaatin erikseen.
     fn aseta_kameran_seurauksen_etaisyys(&mut self, etaisyys: (f32, f32)) -> Result<(), String>;
+}
+
+pub trait ValiaikaistenPiirtaja: Piirtovalmius {
+    /// Esittää pelitilan käyttäjälle jollain tavalla.
+    /// # Arguments
+    /// * `piirrettavat` - Lista piirrettävistä kappaleista
+    fn piirra_kappaleista(
+        &mut self,
+        piirrettavat: &[ValiaikainenPiirrettavaKappale],
+    ) -> Result<(), String>;
+}
+
+pub trait MaailmanPiirtaja: Piirtovalmius {
+    /// Esittää pelitilan käyttäjälle jollain tavalla.
+    /// # Arguments
+    /// * `maailma` - Esitettävä pelimaailma
+    fn piirra_maailma(&mut self, maailma: &PiirrettavaMaailma) -> Result<(), String>;
 }
 
 pub trait PiirrettavaMaailma {
@@ -46,39 +63,20 @@ pub trait PiirrettavaMaailma {
     fn anna_kameran_sijainti(&self) -> Option<Vektori>;
 }
 
-
-pub struct YhdistettyPiirrettavamaailma<'a> {
-    pub maailma_a: &'a PiirrettavaMaailma,
-    pub maailma_b: &'a PiirrettavaMaailma,
-}
-
-impl<'b> PiirrettavaMaailma for YhdistettyPiirrettavamaailma<'b> {
-    /// Piirrettävät kappaleet maailmassa
-    /// # Arguments
-    /// * `sijainti` - Ilmoittaa mistä päin maailmaa halutaan piirrettävät kappaleet
-    fn piirrettavat<'a>(
-        &'a self,
-        sijainti: Vektori,
-    ) -> Box<Iterator<Item = &'a PiirrettavaKappale> + 'a> {
-        Box::new(
-            self.maailma_a
-                .piirrettavat(sijainti)
-                .chain(self.maailma_b.piirrettavat(sijainti)),
-        )
-    }
-
-    /// Antaa kameran sijainnin pelimaailmassa, jos maailma haluaa ehdottaa jotakin
-    fn anna_kameran_sijainti(&self) -> Option<Vektori> {
-        self.maailma_a.anna_kameran_sijainti()
-    }
-}
-
 type RcKappale = Rc<RefCell<Kappale>>;
 
 /// Kappale, joka voidaan piirtää
 pub struct PiirrettavaKappale {
     /// Piirrettävä kappale
     kappale: RcKappale,
+    /// Millä tavalla piirtäminen tehdään
+    piirtotapa: Piirtotapa,
+}
+
+/// Kappale, joka piirretään interpoloimalla kahden muistin välillä
+pub struct ValiaikainenPiirrettavaKappale {
+    /// Piirrettävä kappale
+    kappale: Kappale,
     /// Millä tavalla piirtäminen tehdään
     piirtotapa: Piirtotapa,
 }
@@ -93,6 +91,27 @@ impl PiirrettavaKappale {
             kappale: kappale,
             piirtotapa: piirtotapa,
         }
+    }
+
+    pub fn anna_piirtotapa(&self) -> &Piirtotapa {
+        &self.piirtotapa
+    }
+}
+
+impl ValiaikainenPiirrettavaKappale {
+    /// Luo uuden piirrettävän kappaleen
+    /// # Arguments
+    /// * `kappale` - Piirrettävä kappale
+    /// * `piirtotapa` - Tapa, jolla kappale piirretään
+    pub fn new(kappale: Kappale, piirtotapa: Piirtotapa) -> Self {
+        ValiaikainenPiirrettavaKappale {
+            kappale: kappale,
+            piirtotapa: piirtotapa,
+        }
+    }
+
+    pub fn anna_piirtotapa(&self) -> &Piirtotapa {
+        &self.piirtotapa
     }
 }
 
@@ -252,6 +271,46 @@ impl Piirrettava for PiirrettavaKappale {
     }
 }
 
+impl Piirrettava for ValiaikainenPiirrettavaKappale {
+    /// Piirtää kappaleen canvakselle käyttämällä tarvittavia kameran muunnoksia
+    /// # Arguments
+    /// * `canvas` - Canvas, jolle piirretään
+    /// * `kameran_aiheuttama_muunnos` - Kameran sijainnista johtuva muunnos
+    /// * `kameran_zoomaus` - Kameran zoomauksesta johtuva muunnos
+    /// * `tesktuurit` - Käytössä olevat tekstuurit
+    fn piirra(
+        &self,
+        canvas: &mut Canvas<sdl2::video::Window>,
+        kameran_aiheuttama_muutos: Vektori,
+        kameran_zoomaus: f32,
+        tekstuurit: &HashMap<String, Texture>,
+    ) -> Result<(), String> {
+        match &self.piirtotapa {
+            Piirtotapa::Yksivarinen { vari: v } => {
+                canvas.set_draw_color(v.rgba());
+                self.kappale
+                    .piirra(canvas, kameran_aiheuttama_muutos, kameran_zoomaus)?;
+            }
+            Piirtotapa::Kuvallinen { kuvan_nimi: kuva } => {
+                if let Some(kuva) = tekstuurit.get(kuva) {
+                    self.kappale.piirra_kuvalla(
+                        canvas,
+                        kameran_aiheuttama_muutos,
+                        kameran_zoomaus,
+                        kuva,
+                    )?;
+                } else {
+                    // Kuva ei löydy, joten piirretään punaisella päälle
+                    canvas.set_draw_color(Color::RGB(255, 0, 0));
+                    self.kappale
+                        .piirra(canvas, kameran_aiheuttama_muutos, kameran_zoomaus)?;
+                }
+            }
+        }
+        Ok(())
+    }
+}
+
 /// Peruspiirtäjä, joka piirtää pelin tilan näytölle
 pub struct Peruspiirtaja<'a> {
     /// Canvas, jolle pelin tila piirretään
@@ -327,33 +386,14 @@ impl<'a> Peruspiirtaja<'a> {
     }
 }
 
-impl<'a> Piirtaja for Peruspiirtaja<'a> {
-    /// Piirtää kuvan pelimaailman tilasta.
-    /// # Arguments
-    /// * `maailma` - Pelimaailma, jonka pohjalta kuva piirretään
-    fn piirra_maailma(&mut self, maailma: &PiirrettavaMaailma) -> Result<(), String> {
-        if let Some(sijainti) = maailma.anna_kameran_sijainti() {
-            self.aseta_kameran_sijainti(sijainti)?;
-        }
-        // Lasketaan kameran aiheuttama muutos
-        let muutos = self.kameran_aiheuttama_muutos()?;
-
-        self.canvas.set_draw_color(Color::RGB(10, 100, 10));
-        self.canvas.clear();
-
-        self.canvas.set_draw_color(Color::RGB(200, 100, 10));
-
-        for piirrettava in maailma.piirrettavat(muutos) {
-            piirrettava.piirra(
-                &mut self.canvas,
-                muutos,
-                self.kamera.zoomin_kerroin,
-                &self.tekstuurit,
-            )?;
-        }
+impl<'a> Piirtovalmius for Peruspiirtaja<'a> {
+    fn esita_kuva(&mut self) {
         self.canvas.present();
+    }
 
-        Ok(())
+    fn puhdista_kuva(&mut self) {
+        self.canvas.set_draw_color(Color::RGB(66, 88, 37));
+        self.canvas.clear();
     }
 
     /// Asettaa kameran sijainnin eli missä kohtaa pelimaailmaa kuvan keskipisteen tulisi olla.
@@ -408,6 +448,58 @@ impl<'a> Piirtaja for Peruspiirtaja<'a> {
             y if y >= 1.0 => 1.0,
             y => y,
         };
+        Ok(())
+    }
+}
+
+impl<'a> MaailmanPiirtaja for Peruspiirtaja<'a> {
+    /// Piirtää kuvan pelimaailman tilasta.
+    /// # Arguments
+    /// * `maailma` - Pelimaailma, jonka pohjalta kuva piirretään
+    fn piirra_maailma(&mut self, maailma: &PiirrettavaMaailma) -> Result<(), String> {
+        if let Some(sijainti) = maailma.anna_kameran_sijainti() {
+            self.aseta_kameran_sijainti(sijainti)?;
+        }
+        // Lasketaan kameran aiheuttama muutos
+        let muutos = self.kameran_aiheuttama_muutos()?;
+
+        self.canvas.set_draw_color(Color::RGB(200, 100, 10));
+
+        for piirrettava in maailma.piirrettavat(muutos) {
+            piirrettava.piirra(
+                &mut self.canvas,
+                muutos,
+                self.kamera.zoomin_kerroin,
+                &self.tekstuurit,
+            )?;
+        }
+
+        Ok(())
+    }
+}
+
+impl<'a> ValiaikaistenPiirtaja for Peruspiirtaja<'a> {
+    /// Esittää pelitilan käyttäjälle jollain tavalla.
+    /// # Arguments
+    /// * `piirrettavat` - Lista piirrettävistä kappaleista
+    fn piirra_kappaleista(
+        &mut self,
+        piirrettavat: &[ValiaikainenPiirrettavaKappale],
+    ) -> Result<(), String> {
+        // Lasketaan kameran aiheuttama muutos
+        let muutos = self.kameran_aiheuttama_muutos()?;
+
+        self.canvas.set_draw_color(Color::RGB(200, 100, 10));
+
+        for piirrettava in piirrettavat {
+            piirrettava.piirra(
+                &mut self.canvas,
+                muutos,
+                self.kamera.zoomin_kerroin,
+                &self.tekstuurit,
+            )?;
+        }
+
         Ok(())
     }
 }

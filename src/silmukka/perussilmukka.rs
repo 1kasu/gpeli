@@ -11,20 +11,20 @@ use crate::piirtaja::*;
 use crate::syotteet::*;
 
 /// Perussilmukka, joka päivittää peliä ja piirtää sen niin nopeasti kuin pystytään hyödyntäen päivitysaikaa
-pub struct Perussilmukka<'a> {
+pub struct Perussilmukka<'a, T: MaailmanPiirtaja + ValiaikaistenPiirtaja> {
     /// Tältä voidaan kysellä tapahtumia kuten näppäimen painalluksia
     events: sdl2::EventPump,
     /// Sdl context, jota tarvitaan esim. ajastimien luomisessa
     context: sdl2::Sdl,
     /// Osa, joka vastaa pelitilan esittämisestä käyttäjälle
-    piirtaja: &'a mut Piirtaja,
+    piirtaja: &'a mut (T),
     /// Pelin käyttämät syötteet
     syotteet: Syotteet,
     /// Pelin käyttämä päivitys
     paivitys: &'a mut Paivitys,
 }
 
-impl<'a> Perussilmukka<'a> {
+impl<'a, T: MaailmanPiirtaja + ValiaikaistenPiirtaja> Perussilmukka<'a, T> {
     /// Luo uuden perussilmukan
     /// # Arguments
     /// * `events` - Eventpump, jolta saadaan tapahtumat
@@ -34,7 +34,7 @@ impl<'a> Perussilmukka<'a> {
     pub fn new(
         events: sdl2::EventPump,
         context: sdl2::Sdl,
-        piirtaja: &'a mut Piirtaja,
+        piirtaja: &'a mut T,
         paivitys: &'a mut Paivitys,
     ) -> Self {
         Perussilmukka {
@@ -47,7 +47,7 @@ impl<'a> Perussilmukka<'a> {
     }
 }
 
-impl<'a> Paasilmukka for Perussilmukka<'a> {
+impl<'a, T: MaailmanPiirtaja + ValiaikaistenPiirtaja> Paasilmukka for Perussilmukka<'a, T> {
     /// Käynnistää pääsilmukan ja pyörittää sitä niin kauan kuin se vain pyörii
     fn kaynnista_silmukka(&mut self) -> Result<(), String> {
         let mut _timer = self.context.timer()?;
@@ -89,15 +89,26 @@ impl<'a> Paasilmukka for Perussilmukka<'a> {
             );
 
             maailma.poista_poistettavat();
+            
+            self.piirtaja.puhdista_kuva();
 
             self.piirtaja.piirra_maailma(&maailma)?;
+            let mut piirrettavat_kappaleet = Vec::new();
+            maailma.animaatiot.anna_piirrettavat(
+                &mut piirrettavat_kappaleet,
+                &Paivitysaika::new(&paivitysaika, &kokonaisaika_pelin_alusta),
+            );
+
+            self.piirtaja.piirra_kappaleista(&piirrettavat_kappaleet)?;
+
+            self.piirtaja.esita_kuva();
         }
 
         Ok(())
     }
 }
 
-impl<'a> std::fmt::Display for Perussilmukka<'a> {
+impl<'a, T: MaailmanPiirtaja + ValiaikaistenPiirtaja> std::fmt::Display for Perussilmukka<'a, T> {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(
             f,

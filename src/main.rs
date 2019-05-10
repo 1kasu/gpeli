@@ -1,5 +1,7 @@
 extern crate sdl2;
 
+use std::env;
+
 use sdl2::image::{InitFlag, LoadTexture};
 use sdl2::pixels::Color;
 use sdl2::render::BlendMode;
@@ -19,16 +21,17 @@ mod peli;
 
 use crate::paivitys::{Paivitys, YhdistettyPaivitys};
 use crate::peli::pelihahmonpaivitys::PelihahmonPaivitys;
-use crate::peli::pelinpaivitys::{
-    AnimaatioidenPaivitys, FysiikanPaivitys, SpawnerinPaivitys, TekoalynPaivitys,
-};
-use crate::piirtaja::{Peruspiirtaja, Piirtaja};
+use crate::peli::pelinpaivitys::{FysiikanPaivitys, SpawnerinPaivitys, TekoalynPaivitys};
+use crate::piirtaja::{Peruspiirtaja, Piirtovalmius};
 use crate::silmukka::erillisetpaivityksetsilmukka::ErillisetPaivityksetSilmukka;
+use crate::silmukka::interpoloivasilmukka::InterpoloivaSilmukka;
 use crate::silmukka::perussilmukka::Perussilmukka;
 use crate::silmukka::saannollinensilmukka::SaannollinenSilmukka;
 use crate::silmukka::Paasilmukka;
 
 fn main() -> Result<(), String> {
+    let args: Vec<String> = env::args().collect();
+
     let sdl_context = sdl2::init()?;
     let video_subsystem = sdl_context.video()?;
     let _image_context = sdl2::image::init(InitFlag::PNG)?;
@@ -68,7 +71,6 @@ fn main() -> Result<(), String> {
     let texture = texture_creator.load_texture("ympyra.png")?;
     piirtaja.lisaa_tekstuuri(texture, "ammus".to_string());
 
-    let animaatioiden_paivitys: &mut Paivitys = &mut AnimaatioidenPaivitys;
     let fysiikan_paivitys: &mut Paivitys = &mut FysiikanPaivitys;
     let spawnerin_paivitys: &mut Paivitys = &mut SpawnerinPaivitys::new();
     let tekoalyn_paivitys: &mut Paivitys = &mut TekoalynPaivitys;
@@ -76,58 +78,87 @@ fn main() -> Result<(), String> {
 
     let mut epasaannollinen_paivitys: YhdistettyPaivitys;
     let mut saannollinen_paivitys: YhdistettyPaivitys;
-    let mut silmukka: Box<Paasilmukka> = match 3 {
-        1 => {
-            epasaannollinen_paivitys = YhdistettyPaivitys::new(vec![
-                spawnerin_paivitys,
-                tekoalyn_paivitys,
-                pelihahmon_paivitys,
-                fysiikan_paivitys,
-                animaatioiden_paivitys,
-            ]);
-            Box::new(Perussilmukka::new(
-                events,
-                sdl_context,
-                &mut piirtaja,
-                &mut epasaannollinen_paivitys,
-            ))
-        }
-        2 => {
-            saannollinen_paivitys = YhdistettyPaivitys::new(vec![
-                spawnerin_paivitys,
-                tekoalyn_paivitys,
-                pelihahmon_paivitys,
-                fysiikan_paivitys,
-                animaatioiden_paivitys,
-            ]);
-            Box::new(SaannollinenSilmukka::new(
-                events,
-                sdl_context,
-                &mut piirtaja,
-                &mut saannollinen_paivitys,
-                60, // Kuinka monta kertaa sekunnissa päivitetään
-            ))
-        }
-        3 => {
-            saannollinen_paivitys = YhdistettyPaivitys::new(vec![
-                spawnerin_paivitys,
-                tekoalyn_paivitys,
-                fysiikan_paivitys,
-            ]);
-            epasaannollinen_paivitys =
-                YhdistettyPaivitys::new(vec![pelihahmon_paivitys, animaatioiden_paivitys]);
-            Box::new(ErillisetPaivityksetSilmukka::new(
-                events,
-                sdl_context,
-                &mut piirtaja,
-                &mut saannollinen_paivitys,
-                &mut epasaannollinen_paivitys,
-                60, // Kuinka monta kertaa sekunnissa päivitetään. Ilmeisesti itselläni on vielä 10_000 toimiva...
-            ))
-        }
-        //
-        _ => unreachable!(),
-    };
+    let mut silmukka: Box<Paasilmukka> =
+        match args.get(1).get_or_insert(&"kala".to_string()).parse::<u8>() {
+            Ok(1) => {
+                epasaannollinen_paivitys = YhdistettyPaivitys::new(vec![
+                    spawnerin_paivitys,
+                    tekoalyn_paivitys,
+                    pelihahmon_paivitys,
+                    fysiikan_paivitys,
+                ]);
+                Box::new(Perussilmukka::new(
+                    events,
+                    sdl_context,
+                    &mut piirtaja,
+                    &mut epasaannollinen_paivitys,
+                ))
+            }
+            Ok(2) => {
+                saannollinen_paivitys = YhdistettyPaivitys::new(vec![
+                    spawnerin_paivitys,
+                    tekoalyn_paivitys,
+                    pelihahmon_paivitys,
+                    fysiikan_paivitys,
+                ]);
+                Box::new(SaannollinenSilmukka::new(
+                    events,
+                    sdl_context,
+                    &mut piirtaja,
+                    &mut saannollinen_paivitys,
+                    60, // Kuinka monta kertaa sekunnissa päivitetään
+                ))
+            }
+            Ok(3) => {
+                saannollinen_paivitys = YhdistettyPaivitys::new(vec![
+                    spawnerin_paivitys,
+                    tekoalyn_paivitys,
+                    fysiikan_paivitys,
+                ]);
+                epasaannollinen_paivitys = YhdistettyPaivitys::new(vec![pelihahmon_paivitys]);
+                Box::new(ErillisetPaivityksetSilmukka::new(
+                    events,
+                    sdl_context,
+                    &mut piirtaja,
+                    &mut saannollinen_paivitys,
+                    &mut epasaannollinen_paivitys,
+                    60, // Kuinka monta kertaa sekunnissa päivitetään. Ilmeisesti itselläni on vielä 10_000 toimiva...
+                ))
+            }
+            Ok(4) => {
+                saannollinen_paivitys = YhdistettyPaivitys::new(vec![
+                    spawnerin_paivitys,
+                    tekoalyn_paivitys,
+                    fysiikan_paivitys,
+                ]);
+                epasaannollinen_paivitys = YhdistettyPaivitys::new(vec![pelihahmon_paivitys]);
+                Box::new(InterpoloivaSilmukka::new(
+                    events,
+                    sdl_context,
+                    &mut piirtaja,
+                    &mut saannollinen_paivitys,
+                    &mut epasaannollinen_paivitys,
+                    10, // Kuinka monta kertaa sekunnissa päivitetään. Ilmeisesti itselläni on vielä 10_000 toimiva...
+                ))
+            }
+            _ => {
+                println!(
+                    "Ei tunnisttettu argumenttina silmukkaa (1-n). Käytetään oletusta (1)."
+                );
+                epasaannollinen_paivitys = YhdistettyPaivitys::new(vec![
+                    spawnerin_paivitys,
+                    tekoalyn_paivitys,
+                    pelihahmon_paivitys,
+                    fysiikan_paivitys,
+                ]);
+                Box::new(Perussilmukka::new(
+                    events,
+                    sdl_context,
+                    &mut piirtaja,
+                    &mut epasaannollinen_paivitys,
+                ))
+            }
+        };
     println!("{}", silmukka);
     silmukka.kaynnista_silmukka()
 }
