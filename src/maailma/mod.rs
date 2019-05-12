@@ -306,6 +306,18 @@ impl LisaosienAntaja for Perusmaailma {
         }
         None
     }
+
+    /// Antaa annettuun kappaleeseen liitetyt kappalemuisti-ominaisuudet, jos niitä on
+    /// # Arguments
+    /// * `kappale` - Kappale, jonka muisti-ominaisuutta pyydetään
+    fn anna_kappalemuisti(&self, kappale: &RcKappale) -> Option<&Kappalemuisti> {
+        for muisti in &self.kappalemuisti {
+            if std::ptr::eq(muisti.anna_kappale().as_ptr(), kappale.as_ptr()) {
+                return Some(muisti);
+            }
+        }
+        None
+    }
 }
 
 impl PiirrettavaMaailma for Perusmaailma {
@@ -323,7 +335,19 @@ impl PiirrettavaMaailma for Perusmaailma {
     fn anna_kameran_sijainti(&self) -> Option<Vektori> {
         match self.anna_pelihahmo() {
             None => None,
-            Some(hahmo) => Some(hahmo.anna_kappale().borrow().keskipisteen_sijainti()),
+            Some(hahmo) => match self.interpoloinnin_arvo {
+                Some(arvo) => match self.anna_kappalemuisti(&hahmo.anna_kappale()) {
+                    Some(muisti) => Some(lineaarinen_interpolaatio(
+                        0.0,
+                        muisti.anna_versiot().0.keskipisteen_sijainti(),
+                        1.0,
+                        muisti.anna_versiot().1.keskipisteen_sijainti(),
+                        arvo,
+                    )),
+                    None => Some(hahmo.anna_kappale().borrow().keskipisteen_sijainti()),
+                },
+                None => Some(hahmo.anna_kappale().borrow().keskipisteen_sijainti()),
+            },
         }
     }
 }
@@ -346,6 +370,10 @@ pub trait LisaosienAntaja {
     /// # Arguments
     /// * `kappale` - Kappale, jonka fysiikka-ominaisuutta pyydetään
     fn anna_fysiikka(&self, kappale: &RcKappale) -> Option<&Fysiikkakappale>;
+    /// Antaa annettuun kappaleeseen liitetyt kappalemuisti-ominaisuudet, jos niitä on
+    /// # Arguments
+    /// * `kappale` - Kappale, jonka muisti-ominaisuutta pyydetään
+    fn anna_kappalemuisti(&self, kappale: &RcKappale) -> Option<&Kappalemuisti>;
 }
 
 /// Tulee toteuttaa, jos laajentaa peruskappaleen toiminnallisuutta esim. pirrettäessä

@@ -126,13 +126,15 @@ impl<'a> Paasilmukka for InterpoloivaSilmukka<'a> {
 
             let mut piirrettavat_kappaleet = Vec::new();
 
-            if let Some(kamera) = maailma.anna_kameran_sijainti() {
-                self.piirtaja.aseta_kameran_sijainti(kamera)?;
-            }
             maailma.aseta_interpolaatio_arvo(
                 aikaa_seuraavaan_saannolliseen_paivitykseen.as_micros() as f32
                     / self.paivitysvali.as_micros() as f32,
             );
+
+            if let Some(kamera) = maailma.anna_kameran_sijainti() {
+                self.piirtaja.aseta_kameran_sijainti(kamera)?;
+            }
+
             maailma.anna_piirrettavat(&mut piirrettavat_kappaleet);
             maailma.animaatiot.anna_piirrettavat(
                 &mut piirrettavat_kappaleet,
