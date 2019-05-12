@@ -29,6 +29,8 @@ pub struct InterpoloivaSilmukka<'a> {
     epasaannollinen_paivitys: &'a mut Paivitys,
     /// Kuinka usein päivitys tehdään
     paivitysvali: Duration,
+    /// Käytännössä arvo 0 tai 1. 0, jos interpoloidaan ja 1, jos ekstrapoloidaan.
+    ekstrapolointi_lisa: f32,
 }
 
 impl<'a> InterpoloivaSilmukka<'a> {
@@ -55,6 +57,34 @@ impl<'a> InterpoloivaSilmukka<'a> {
             saannollinen_paivitys: saannollinen_paivitys,
             epasaannollinen_paivitys: epasaannollinen_paivitys,
             paivitysvali: Duration::new(0, 1_000_000_000 / paivitys_tiheys),
+            ekstrapolointi_lisa: 0.0,
+        }
+    }
+
+    /// Luo uuden silmukan, jolla on sekä säännöllinen, että epäsäännöllinen päivitys
+    /// # Arguments
+    /// * `events` - Eventpump, jolta saadaan tapahtumat
+    /// * `context` - SDL2 konteksti
+    /// * `piirtaja` - Osa, joka huolehtii pelin piirtämisestä
+    /// * `paivitys` - Pelin käyttämä päivitys
+    /// * `paivitys_tiheys` - Kuinka monta kertaa sekunnissa päivitys tehdään
+    pub fn new_ekstrapoloiva(
+        events: sdl2::EventPump,
+        context: sdl2::Sdl,
+        piirtaja: &'a mut ValiaikaistenPiirtaja,
+        saannollinen_paivitys: &'a mut Paivitys,
+        epasaannollinen_paivitys: &'a mut Paivitys,
+        paivitys_tiheys: u32,
+    ) -> Self {
+        InterpoloivaSilmukka {
+            events: events,
+            context: context,
+            piirtaja: piirtaja,
+            syotteet: Syotteet::new(),
+            saannollinen_paivitys: saannollinen_paivitys,
+            epasaannollinen_paivitys: epasaannollinen_paivitys,
+            paivitysvali: Duration::new(0, 1_000_000_000 / paivitys_tiheys),
+            ekstrapolointi_lisa: 1.0,
         }
     }
 }
@@ -127,8 +157,9 @@ impl<'a> Paasilmukka for InterpoloivaSilmukka<'a> {
             let mut piirrettavat_kappaleet = Vec::new();
 
             maailma.aseta_interpolaatio_arvo(
-                aikaa_seuraavaan_saannolliseen_paivitykseen.as_micros() as f32
-                    / self.paivitysvali.as_micros() as f32,
+                self.ekstrapolointi_lisa
+                    + aikaa_seuraavaan_saannolliseen_paivitykseen.as_micros() as f32
+                        / self.paivitysvali.as_micros() as f32,
             );
 
             if let Some(kamera) = maailma.anna_kameran_sijainti() {

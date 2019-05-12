@@ -145,7 +145,24 @@ fn main() -> Result<(), String> {
                     &mut piirtaja,
                     &mut saannollinen_paivitys,
                     &mut epasaannollinen_paivitys,
-                    10, // Kuinka monta kertaa sekunnissa päivitetään. Ilmeisesti itselläni on vielä 10_000 toimiva...
+                    5, // Kuinka monta kertaa sekunnissa päivitetään. Ilmeisesti itselläni on vielä 10_000 toimiva...
+                ))
+            }
+            Ok(5) => {
+                saannollinen_paivitys = YhdistettyPaivitys::new(vec![
+                    spawnerin_paivitys,
+                    tekoalyn_paivitys,
+                    fysiikan_paivitys,
+                ]);
+                epasaannollinen_paivitys =
+                    YhdistettyPaivitys::new(vec![pelihahmon_paivitys, animaatioiden_paivitys]);
+                Box::new(InterpoloivaSilmukka::new_ekstrapoloiva(
+                    events,
+                    sdl_context,
+                    &mut piirtaja,
+                    &mut saannollinen_paivitys,
+                    &mut epasaannollinen_paivitys,
+                    5, // Kuinka monta kertaa sekunnissa päivitetään. Ilmeisesti itselläni on vielä 10_000 toimiva...
                 ))
             }
             _ => {
