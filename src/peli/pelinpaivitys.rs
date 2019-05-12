@@ -78,6 +78,42 @@ impl Paivitys for SpawnerinPaivitys {
 }
 
 /// Päivittää maailmassa olevia tekoälyjä
+pub struct AnimaatioidenPaivitys;
+
+impl Paivitys for AnimaatioidenPaivitys {
+    /// Alustaa pelin
+    /// # Arguments
+    /// * `maailma` - Pelimaailma, joka alustetaan
+    /// * `syotteet` - Alustettavat syotteet
+    /// * `events` - Sdl:n osa, jolta voidaan kysyä tapahtumia kuten näppäinten painalluksia
+    fn alusta(
+        &mut self,
+        _maailma: &mut Perusmaailma,
+        _syotteet: &mut Syotteet,
+        _events: &sdl2::EventPump,
+    ) {
+
+    }
+
+    /// Päivittää annetun pelimaailman tilan annetuilla syötteillä ja päivitysajalla
+    /// # Arguments
+    /// * `maailma` - Pelimaailma, jonka tila päivitetään
+    /// * `_syotteet` - Päivityksessä käytettävät syötteet
+    /// * `_paivitysaika` - Aika, jonka verran pelimaailmaa paivitetaan
+    fn paivita(
+        &mut self,
+        maailma: &mut Perusmaailma,
+        _syotteet: &mut Syotteet,
+        paivitysaika: &Paivitysaika,
+    ) {
+        maailma.animaatio_kuva = Default::default();
+        maailma
+            .animaatiot
+            .anna_piirrettavat(&mut maailma.animaatio_kuva, paivitysaika);
+    }
+}
+
+/// Päivittää maailmassa olevia tekoälyjä
 pub struct TekoalynPaivitys;
 
 impl Paivitys for TekoalynPaivitys {
@@ -109,7 +145,6 @@ impl Paivitys for TekoalynPaivitys {
         maailma.laske_tekoalyt();
     }
 }
-
 
 /// Pelin fysiikan päivitys ja törmäyskäsittely
 pub struct FysiikanPaivitys;

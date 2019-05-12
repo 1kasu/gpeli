@@ -21,7 +21,9 @@ mod peli;
 
 use crate::paivitys::{Paivitys, YhdistettyPaivitys};
 use crate::peli::pelihahmonpaivitys::PelihahmonPaivitys;
-use crate::peli::pelinpaivitys::{FysiikanPaivitys, SpawnerinPaivitys, TekoalynPaivitys};
+use crate::peli::pelinpaivitys::{
+    AnimaatioidenPaivitys, FysiikanPaivitys, SpawnerinPaivitys, TekoalynPaivitys,
+};
 use crate::piirtaja::{Peruspiirtaja, Piirtovalmius};
 use crate::silmukka::erillisetpaivityksetsilmukka::ErillisetPaivityksetSilmukka;
 use crate::silmukka::interpoloivasilmukka::InterpoloivaSilmukka;
@@ -71,6 +73,7 @@ fn main() -> Result<(), String> {
     let texture = texture_creator.load_texture("ympyra.png")?;
     piirtaja.lisaa_tekstuuri(texture, "ammus".to_string());
 
+    let animaatioiden_paivitys: &mut Paivitys = &mut AnimaatioidenPaivitys;
     let fysiikan_paivitys: &mut Paivitys = &mut FysiikanPaivitys;
     let spawnerin_paivitys: &mut Paivitys = &mut SpawnerinPaivitys::new();
     let tekoalyn_paivitys: &mut Paivitys = &mut TekoalynPaivitys;
@@ -86,6 +89,7 @@ fn main() -> Result<(), String> {
                     tekoalyn_paivitys,
                     pelihahmon_paivitys,
                     fysiikan_paivitys,
+                    animaatioiden_paivitys,
                 ]);
                 Box::new(Perussilmukka::new(
                     events,
@@ -100,6 +104,7 @@ fn main() -> Result<(), String> {
                     tekoalyn_paivitys,
                     pelihahmon_paivitys,
                     fysiikan_paivitys,
+                    animaatioiden_paivitys,
                 ]);
                 Box::new(SaannollinenSilmukka::new(
                     events,
@@ -115,7 +120,8 @@ fn main() -> Result<(), String> {
                     tekoalyn_paivitys,
                     fysiikan_paivitys,
                 ]);
-                epasaannollinen_paivitys = YhdistettyPaivitys::new(vec![pelihahmon_paivitys]);
+                epasaannollinen_paivitys =
+                    YhdistettyPaivitys::new(vec![pelihahmon_paivitys, animaatioiden_paivitys]);
                 Box::new(ErillisetPaivityksetSilmukka::new(
                     events,
                     sdl_context,
@@ -131,7 +137,8 @@ fn main() -> Result<(), String> {
                     tekoalyn_paivitys,
                     fysiikan_paivitys,
                 ]);
-                epasaannollinen_paivitys = YhdistettyPaivitys::new(vec![pelihahmon_paivitys]);
+                epasaannollinen_paivitys =
+                    YhdistettyPaivitys::new(vec![pelihahmon_paivitys, animaatioiden_paivitys]);
                 Box::new(InterpoloivaSilmukka::new(
                     events,
                     sdl_context,
@@ -150,6 +157,7 @@ fn main() -> Result<(), String> {
                     tekoalyn_paivitys,
                     pelihahmon_paivitys,
                     fysiikan_paivitys,
+                    animaatioiden_paivitys,
                 ]);
                 Box::new(Perussilmukka::new(
                     events,

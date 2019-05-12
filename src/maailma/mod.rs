@@ -39,6 +39,7 @@ pub struct Perusmaailma {
     poistettavat: Vec<RcKappale>,
     /// Lista kaikista animaatioista
     pub animaatiot: Animaatiot,
+    pub animaatio_kuva: Vec<ValiaikainenPiirrettavaKappale>,
 }
 
 impl Perusmaailma {
@@ -54,6 +55,7 @@ impl Perusmaailma {
             pelihahmo: None,
             poistettavat: Vec::new(),
             animaatiot: Default::default(),
+            animaatio_kuva: Default::default(),
         }
     }
 
@@ -69,6 +71,7 @@ impl Perusmaailma {
             pelihahmo: None,
             poistettavat: Vec::new(),
             animaatiot: Default::default(),
+            animaatio_kuva: Default::default(),
         }
     }
 

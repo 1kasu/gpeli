@@ -136,14 +136,11 @@ impl<'a> Paasilmukka for InterpoloivaSilmukka<'a> {
             }
 
             maailma.anna_piirrettavat(&mut piirrettavat_kappaleet);
-            maailma.animaatiot.anna_piirrettavat(
-                &mut piirrettavat_kappaleet,
-                &Paivitysaika::new(&paivitysaika, &kokonaisaika_pelin_alusta),
-            );
 
+            // Piirretään maailma ja animaatiot
             self.piirtaja.puhdista_kuva();
-
             self.piirtaja.piirra_kappaleista(&piirrettavat_kappaleet)?;
+            self.piirtaja.piirra_kappaleista(&maailma.animaatio_kuva)?;
             self.piirtaja.esita_kuva();
         }
 
