@@ -109,7 +109,7 @@ impl<'a, T: MaailmanPiirtaja + ValiaikaistenPiirtaja> Paasilmukka
                 self.saannollinen_paivitys.paivita(
                     &mut maailma,
                     &mut self.syotteet,
-                    &Paivitysaika::new(&self.paivitysvali, &kokonaisaika_pelin_alusta_saannollinen),
+                    &Paivitysaika::new(&self.paivitysvali, &kokonaisaika_pelin_alusta_saannollinen)
                 );
 
                 aikaa_seuraavaan_saannolliseen_paivitykseen -= self.paivitysvali;
