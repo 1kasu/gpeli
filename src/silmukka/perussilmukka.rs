@@ -50,44 +50,52 @@ impl<'a, T: MaailmanPiirtaja + ValiaikaistenPiirtaja> Perussilmukka<'a, T> {
 impl<'a, T: MaailmanPiirtaja + ValiaikaistenPiirtaja> Paasilmukka for Perussilmukka<'a, T> {
     /// Käynnistää pääsilmukan ja pyörittää sitä niin kauan kuin se vain pyörii
     fn kaynnista_silmukka(&mut self) -> Result<(), String> {
+        // Alustetaan aikaan liittyvät muuttujat
         let mut _timer = self.context.timer()?;
         let mut peliaika = Instant::now();
         let mut kokonaisaika_pelin_alusta = Duration::new(0, 0);
         let mut vanha_peliaika = peliaika;
         let mut paivitysaika;
 
+        // Alustetaan maailma
         let mut maailma = Perusmaailma::new();
         self.paivitys
             .alusta(&mut maailma, &mut self.syotteet, &self.events);
 
+        // Varsinainen pääsilmukka
         'paasilmukka: loop {
+            // Kerätään tapahtumat
             for event in self.events.poll_iter() {
                 match event {
+                    // Tarkistetaan suljetaanko peli (esim. ikkunan X klikkaamalla tai Esc näppäintä painamalla)
                     Event::Quit { .. }
                     | Event::KeyDown {
                         keycode: Some(Keycode::Escape),
                         ..
                     } => {
+                        // Poistutaan pääsilmukasta eli käytännössä lopetetaan peli
                         break 'paasilmukka;
                     }
                     _ => {}
                 }
             }
-            //timer.delay(10);
-            // Lasketaan paivitysaika
+            // Lasketaan paivitysaika ja päivitetään kokonaisaikaa pelin alusta
             peliaika = Instant::now();
             paivitysaika = peliaika.duration_since(vanha_peliaika);
             kokonaisaika_pelin_alusta += paivitysaika;
             vanha_peliaika = peliaika;
 
+            // Päivitetään syötteiden tilaa
             self.syotteet.paivita_nappainten_tilat(&self.events);
 
+            // Päivitetään maailman tilaa
             self.paivitys.paivita(
                 &mut maailma,
                 &mut self.syotteet,
                 &Paivitysaika::new(&paivitysaika, &kokonaisaika_pelin_alusta),
             );
 
+            // Poistetaan maailmasta poistettaviksi merkityt kappaleet
             maailma.poista_poistettavat();
 
             // Piirretään maailma ja animaatiot
