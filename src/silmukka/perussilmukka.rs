@@ -92,7 +92,7 @@ impl<'a, T: MaailmanPiirtaja + ValiaikaistenPiirtaja> Paasilmukka for Perussilmu
             self.paivitys.paivita(
                 &mut maailma,
                 &mut self.syotteet,
-                &Paivitysaika::new(&paivitysaika, &kokonaisaika_pelin_alusta),
+                &Paivitysaika::new(&paivitysaika, &kokonaisaika_pelin_alusta)
             );
 
             // Poistetaan maailmasta poistettaviksi merkityt kappaleet

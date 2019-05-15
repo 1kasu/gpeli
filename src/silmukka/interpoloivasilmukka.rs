@@ -137,7 +137,7 @@ impl<'a> Paasilmukka for InterpoloivaSilmukka<'a> {
                 self.saannollinen_paivitys.paivita(
                     &mut maailma,
                     &mut self.syotteet,
-                    &Paivitysaika::new(&self.paivitysvali, &kokonaisaika_pelin_alusta_saannollinen),
+                    &Paivitysaika::new(&self.paivitysvali, &kokonaisaika_pelin_alusta_saannollinen)
                 );
 
                 maailma.paivita_kappalemuistia();

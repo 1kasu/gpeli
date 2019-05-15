@@ -108,7 +108,7 @@ impl<'a, T: MaailmanPiirtaja + ValiaikaistenPiirtaja> Paasilmukka for Saannollin
             self.paivitys.paivita(
                 &mut maailma,
                 &mut self.syotteet,
-                &Paivitysaika::new(&paivitysaika, &kokonaisaika_pelin_alusta),
+                &Paivitysaika::new(&paivitysaika, &kokonaisaika_pelin_alusta)
             );
 
             // Poistetaan poistettavat kappaleet
