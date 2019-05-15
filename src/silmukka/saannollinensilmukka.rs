@@ -84,26 +84,34 @@ impl<'a, T: MaailmanPiirtaja + ValiaikaistenPiirtaja> Paasilmukka for Saannollin
             peliaika = Instant::now();
             paivitysaika = peliaika.duration_since(vanha_peliaika);
 
+            // Tarkistetaan onko viime päivityksestä kulunut tarpeeksi aikaa
             if paivitysaika < self.paivitysvali {
+                // Jos seuraavaan päivitykseen on liian paljon aikaa, niin
+                // keskeytetään säikeen toiminta hetkeksi
                 if (self.paivitysvali - paivitysaika).as_micros() > lepoaika {
                     _timer.delay(lepoaika as u32);
                 }
+                // Palataan silmukan alkuun
                 continue;
             } else {
+                // Päivitetään päivitysajat
                 paivitysaika = self.paivitysvali
             }
 
             vanha_peliaika = peliaika;
             kokonaisaika_pelin_alusta += paivitysaika;
 
+            // Päivitetään syötteiden tila
             self.syotteet.paivita_nappainten_tilat(&self.events);
 
+            // Päivitetään pelimaailma
             self.paivitys.paivita(
                 &mut maailma,
                 &mut self.syotteet,
                 &Paivitysaika::new(&paivitysaika, &kokonaisaika_pelin_alusta),
             );
 
+            // Poistetaan poistettavat kappaleet
             maailma.poista_poistettavat();
 
             // Piirretään maailma ja animaatiot
@@ -112,7 +120,6 @@ impl<'a, T: MaailmanPiirtaja + ValiaikaistenPiirtaja> Paasilmukka for Saannollin
             self.piirtaja.piirra_kappaleista(&maailma.animaatio_kuva)?;
             self.piirtaja.esita_kuva();
         }
-
         Ok(())
     }
 }
